@@ -15,20 +15,6 @@ public class P2LitRenderer : MonoBehaviour
         Multiply
     };
 
-    [System.Serializable]
-    public struct MeshData
-    {
-        //32 length arrays declared in shader
-
-        public Vector3 vert;
-        public Vector2 uv;
-        public int index;
-
-        public const int stride = 3 * sizeof(float) + 2 * sizeof(float) + sizeof(int);
-
-
-    }
-
     [SerializeField]
     Particles2 _particles;
 
@@ -52,7 +38,6 @@ public class P2LitRenderer : MonoBehaviour
     public float _fbmAmt = 0f;
     [Range(0, 2)]
     public float _fbmFreq = 1f;
-
 
     [Range(0, 1)]
     public float _particlize = 1.0f;
@@ -129,7 +114,6 @@ public class P2LitRenderer : MonoBehaviour
         _dummyMesh.SetIndices(indices, MeshTopology.Triangles, 0);
         _dummyMesh.bounds = new Bounds(Vector3.zero, new Vector3(1000, 1000, 1000));
 
-        //GetComponent<MeshFilter>().sharedMesh = _dummyMesh;
     }
 
     void CreateDrawArgsBuffer()
@@ -160,10 +144,13 @@ public class P2LitRenderer : MonoBehaviour
         {
             meshDataArray[i].index = ParticleMesh.triangles[i];
         }
-
+        for (int i = 0; i < ParticleMesh.normals.Length; i++)
+        {
+            meshDataArray[i].norm = ParticleMesh.normals[i];
+        }
+        Debug.Log(ParticleMesh.normals.Length + " Normals ");
         _meshBuffer = new ComputeBuffer(meshDataArray.Length, MeshData.stride);
         _meshBuffer.SetData(meshDataArray);
-
     }
 
     void UpdateMaterialProperties()
@@ -232,9 +219,7 @@ public class P2LitRenderer : MonoBehaviour
     {
         UpdateMaterialProperties();
 
-       Graphics.DrawMeshInstancedIndirect(_dummyMesh, 0, _renderMaterial, _dummyMesh.bounds, _batchDrawArgs, 0, null, ShadowCastingMode.On, true, gameObject.layer, Camera.main);
-
-        //Graphics.DrawProceduralIndirect(MeshTopology.Triangles, _batchDrawArgs);
+        Graphics.DrawMeshInstancedIndirect(_dummyMesh, 0, _renderMaterial, _dummyMesh.bounds, _batchDrawArgs, 0, null, ShadowCastingMode.On, true, gameObject.layer, Camera.main);
     }
 
     private void OnValidate()
@@ -243,7 +228,7 @@ public class P2LitRenderer : MonoBehaviour
             _particles = GetComponent<Particles2>();
 
         if (_shader == null)
-            _shader = Shader.Find("P2/UnlitParticles");
+            _shader = Shader.Find("P2/LitParticles");
 
         if (_particleMesh == null)
         {

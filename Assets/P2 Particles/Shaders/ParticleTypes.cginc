@@ -3,6 +3,7 @@ struct MeshData
 	float3	vert;
 	float2	uv;
 	int		index;
+	float3 norm;
 };
 
 struct Particle

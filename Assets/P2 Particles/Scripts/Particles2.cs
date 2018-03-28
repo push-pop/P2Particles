@@ -178,7 +178,7 @@ public class Particles2 : MonoBehaviour
         _kernels.SetVector("_uvStep", _uvStep);
 
 
-        if (_skinnedEmitter != null)
+        if (_skinnedEmitter != null && _skinnedEmitter.BakedPoints != null)
             _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "SkinnedPoints", _skinnedEmitter.BakedPoints);
 
         _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "Particles", _particleBuffer);

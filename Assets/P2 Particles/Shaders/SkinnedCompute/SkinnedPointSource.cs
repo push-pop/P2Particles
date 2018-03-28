@@ -28,6 +28,7 @@ public class SkinnedPointSource : MonoBehaviour
     // Use this for initialization
     void Awake()
     {
+        CreateMaterials();
         CreateBuffer();
         BuildCamera();
         OverrideRenderer();
@@ -94,10 +95,15 @@ public class SkinnedPointSource : MonoBehaviour
         _target.enabled = RenderBody;
     }
 
-    private void OnValidate()
+    private void CreateMaterials()
     {
         _placeholderMaterial = new Material(Shader.Find("P2/Placeholder"));
         _replacementShader = Shader.Find("P2/Replacement");
+    }
+
+    private void OnValidate()
+    {
+        CreateMaterials();
     }
 
 }

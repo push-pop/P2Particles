@@ -62,7 +62,7 @@ public class VectorField : MonoBehaviour
     bool _swapYZ = true;
 
     VectorFieldTexture _vField;
-    void Awake()
+    void OnEnable()
     {
         FieldToLoad f = new FieldToLoad()
         {

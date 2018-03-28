@@ -192,7 +192,7 @@
 							output = _Color;
 							
 							if (_DebugVelocity)
-								output = i.color;
+								output = i.color*_Color.a;
 
 							float a = fbm(float3(i.ambient * 10 * _FbmFreq + _Time.xyz / 5));
 							a = remap(a, _RemapFbm.x, _RemapFbm.y, _RemapFbm.z, _RemapFbm.w);

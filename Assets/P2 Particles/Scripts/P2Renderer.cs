@@ -14,19 +14,6 @@ public class P2Renderer : MonoBehaviour
         Multiply
     };
 
-    [System.Serializable]
-    public struct MeshData
-    {
-        //32 length arrays declared in shader
-
-        public Vector3 vert;
-        public Vector2 uv;
-        public int index;
-
-        public const int stride = 3 * sizeof(float) + 2 * sizeof(float) + sizeof(int);
-
-
-    }
 
     [SerializeField]
     Particles2 _particles;
@@ -48,7 +35,7 @@ public class P2Renderer : MonoBehaviour
     public Vector4 _remapFBM = new Vector4(0, 1, 0, 1);
 
     [Range(0, 1)]
-    public float _fbmAmt = 0f;
+    public float _fbmAmt = 1f;
     [Range(0, 2)]
     public float _fbmFreq = 1f;
 
