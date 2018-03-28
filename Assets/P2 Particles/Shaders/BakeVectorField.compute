@@ -1,0 +1,53 @@
+﻿#pragma kernel CSMain
+
+//#include "DKParticleTypes.cginc"
+
+struct VectorFieldInfo
+{
+	float3 center;
+	float3 resolution;
+	float3 boundingMinimum;
+	float3 boundingMaximum;
+	float fieldScale;
+	float forceScale;
+	int numVectors;
+};
+
+struct VectorInfo
+{
+	float3 position;
+	float3 direction;
+};
+
+StructuredBuffer<VectorFieldInfo>	_vFieldInfo;
+StructuredBuffer<VectorInfo>		_vectorField;
+RWTexture3D<float4>					_result;
+
+bool								_swapYZ;
+
+uint3 to3D(uint id, uint3 res)
+{
+	return uint3(id % res.x,
+		(id / res.x) % res.y,
+		id / (res.x * res.y));
+}
+
+[numthreads(8, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+	VectorFieldInfo info = _vFieldInfo[0];
+	//uint idx = id.x*info.resolution.x + id.y*info.resolution.y + id.z*info.resolution.z;
+
+	uint idx = id.x;
+	VectorInfo vec = _vectorField[idx];
+
+	uint3 pos = float3(id.x % 10, (id.x / 10) % 10, id.x / (10 * 10));
+
+	//Weird swizzle here is due to Vectoraygen outputting Z-Up
+	if(_swapYZ)
+		_result[pos.xzy] = float4(_vectorField[idx].direction.xzy, 1);
+	else
+		_result[pos] = float4(_vectorField[idx].direction, 1);
+
+
+}

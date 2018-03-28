@@ -1,0 +1,12 @@
+[submodule "Packages/Klak"]
+	path = Packages/Klak
+	url = https://github.com/push-pop/Klak
+[submodule "Packages/CMUMocap"]
+	path = Packages/CMUMocap
+	url = https://github.com/push-pop/CMUMocap
+[submodule "Assets/Packages/Klak"]
+	path = Assets/Packages/Klak
+	url = https://github.com/push-pop/Klak.git
+[submodule "Assets/Packages/CMUMocap"]
+	path = Assets/Packages/CMUMocap
+	url = https://github.com/push-pop/CMUMocap.git

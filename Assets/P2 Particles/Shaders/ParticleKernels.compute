@@ -1,0 +1,342 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel InitParticles
+#pragma kernel UpdateParticles
+//#pragma kernel ClearGrid
+
+#include "BooleanOperators.hlsl"
+#include "SimplexNoiseGrad3D.cginc"
+#include "UnityCG.cginc"
+#include "ParticleTypes.cginc"
+#include "VectorFields.hlsl"
+
+#include "SkinnedCompute/PointData.cginc"
+
+#define NUM_THREADS 8
+
+#define madfrac(A,B) mad((A), (B), -floor((A)*(B)))
+#define PHI (sqrt(5)*0.5 + 0.5)
+
+#pragma target 4.0
+
+
+
+struct Vortex
+{
+	float3 center;
+	float3 axis;
+	float force;
+};
+
+struct SystemInfo
+{
+	int emitterIndex;
+	int emitCount;
+}; 
+
+
+StructuredBuffer<Vortex> Vortices;
+RWStructuredBuffer<Particle> Particles;
+StructuredBuffer<PointData> SkinnedPoints;
+
+RWStructuredBuffer<SystemInfo> Info;
+StructuredBuffer<float> Waveform;
+StructuredBuffer<float3> EmitterList;
+
+Texture2D _UVParam1;
+SamplerState sampler_UVParam1;
+
+Texture2D _UVParam2;
+SamplerState sampler_UVParam2;
+
+float _explodeMult;
+
+float life_mult;
+int vortex_count;
+int _emitterCount;
+float damping;
+float _sphereRadius;
+float _numParticles;
+float _dt;
+float _maxLife;
+float _noiseAmplitude;
+float _centerAttractorMult;
+float _vectorFieldFollow;
+float _noiseFrequency;
+float _homeAttractorMult;
+float2 _uvStep;
+float3 _sphereCenter;
+float _emitFromTransform;
+#define _cubeSide 50; 
+int _homeIndex;
+
+uint3 to3D(uint id)
+{
+	float side = _cubeSide;
+	return uint3(id % side,
+		(id / side) % side,
+		id / (side * side));
+}
+
+uint2 to2D(uint id, float side)
+{
+	return uint2((float)id / side, fmod(id, side));
+}
+
+float3 SmoothDamp3(float3 current, float3 target, inout float3 currentVelocity, float smoothTime, float maxSpeed, float deltaTime)
+{
+	smoothTime = max(0.0001f, smoothTime);
+	float3 num = 2 / smoothTime;
+	float3 num2 = num * deltaTime;
+	float3 num3 = 1 / (float3(1, 1, 1) + num2 + 0.48 * num2 * num2 + 0.235 * num2 * num2 * num2);
+	float3 num4 = current - target;
+	float3 num5 = target;
+	float num6 = maxSpeed * smoothTime;
+	num4 = clamp(num4, -num6, num6);
+	target = current - num4;
+	float num7 = (currentVelocity + num * num4) * deltaTime;
+	currentVelocity = (currentVelocity - num * num7) * num3;
+
+	float3 num8 = target + (num4 + num7) * num3;
+	if ((distance(num5, current) > 0))//== (num8 > num5))
+	{
+		num8 = num5;
+		currentVelocity = (num8 - num5) / deltaTime;
+	}
+	return num8;
+}
+
+float2 ToRadialCoords(float3 position)
+{
+	float3 norm = normalize(position);
+	float lat = acos(norm.y);
+	float lon = atan2(norm.z, norm.x);
+	float2 sphereCoords = float2(lon, lat)* float2(0.5 / UNITY_PI, 1.0 / UNITY_PI);
+	return float2(0.5, 1.0) - sphereCoords;
+}
+
+// Version 3 https://stackoverflow.com/questions/5149544/can-i-generate-a-random-number-inside-a-pixel-shader
+float random(float2 p)
+{
+	float2 K1 = float2(
+		23.14069263277926, // e^pi (Gelfond's constant)
+		2.665144142690225 // 2^sqrt(2) (Gelfondâ€“Schneider constant)
+		);
+	return frac(cos(dot(p, K1)) * 12345.6789);
+}
+
+float nrand(float2 uv, float salt)
+{
+	uv += float2(salt, 12);
+	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+// Uniformaly distributed points on a unit sphere
+// http://mathworld.wolfram.com/SpherePointPicking.html 
+float3 random_point_on_sphere(float2 uv) {
+	//float u = random(uv) * 2 - 1;
+	//float theta = nrand(uv, 11) * UNITY_PI * 2;
+	//float u2 = sqrt(1 - u * u);
+
+
+	//This algorithm has less artifacts:
+	float x1 = random(uv) * 2 - 1;
+	float x2 = nrand(uv, 17) * 2 - 1;
+
+	float term = sqrt(1 - x1*x1 - x2*x2);
+
+	return float3(
+		2 * x1*term,
+		2 * x2*term,
+		1 - 2 * (x1*x1 + x2*x2)
+		);
+	//return float3(u2 * cos(theta), u2 * sin(theta), u);
+}
+
+float3 fibbonacci_point_on_sphere(float i, float n)
+{
+
+	float phi = 2 * UNITY_PI*madfrac(i, PHI - 1);
+	float cosTheta = 1 - (2 * i + 1)*rcp(n);
+	float sinTheta = sqrt(saturate(1 - cosTheta*cosTheta));
+	return float3(
+		cos(phi)*sinTheta,
+		sin(phi)*sinTheta,
+		cosTheta);
+}
+
+
+
+float3x3 rotationMatrix(float3 axis, float angle)
+{
+	axis = normalize(axis);
+	float s = sin(angle);
+	float c = cos(angle);
+	float oc = 1.0 - c;
+
+	return float3x3(oc * axis.x * axis.x + c, oc * axis.x * axis.y - axis.z * s, oc * axis.z * axis.x + axis.y * s,
+		oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c, oc * axis.y * axis.z - axis.x * s,
+		oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z + c);
+}
+
+float3 RotateAroundYInDegrees(float3 vertex, float degrees)
+{
+	float alpha = degrees * UNITY_PI / 180.0;
+	float sina, cosa;
+	sincos(alpha, sina, cosa);
+	float2x2 m = float2x2(cosa, -sina, sina, cosa);
+	return float3(mul(m, vertex.xz), vertex.y).xzy;
+}
+
+float4x4 rotationMatrix4(float3 axis, float angle)
+{
+	axis = normalize(axis);
+	float s = sin(angle);
+	float c = cos(angle);
+	float oc = 1.0 - c;
+
+	return float4x4(oc * axis.x * axis.x + c, oc * axis.x * axis.y - axis.z * s, oc * axis.z * axis.x + axis.y * s, 0.0,
+		oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c, oc * axis.y * axis.z - axis.x * s, 0.0,
+		oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z + c, 0.0,
+		0.0, 0.0, 0.0, 1.0);
+}
+
+Particle EmitFromCube(uint id)
+{
+	Particle p = Particles[id];
+
+	uint3 coords = to3D(id);
+
+	float step =  2*_sphereRadius/_cubeSide;
+	float3 start = -float3(-_sphereRadius + step/2, -_sphereRadius + step/2, -_sphereRadius + step/2);
+
+	p.position = start - step*coords;
+
+	p.life = 3;
+	p.uv = ToRadialCoords(p.position - _sphereCenter);
+
+	return p;
+
+}
+
+
+Particle EmitFromSphere(uint id)
+{
+	Particle p = Particles[id];
+
+	//float4 vert = float4(random_point_on_sphere(p.uv), 1);
+	float4 vert = float4(fibbonacci_point_on_sphere(id, _numParticles), 1);
+	p.position = _sphereCenter + _sphereRadius*vert;
+	p.age = 0;
+	p.life = 3;
+	p.uv = ToRadialCoords(p.position - _sphereCenter);
+
+	return p;
+}
+
+
+
+Particle EmitFromEmitterList(uint id)
+{
+	Particle p = Particles[id];
+
+	int idx = id%_emitterCount;
+
+	p.position = EmitterList[idx];
+	p.velocity = float3(0,0,0);
+	p.life = 3;
+	p.uv = ToRadialCoords(p.position - _sphereCenter);
+
+
+	return p;
+}
+
+Particle EmitFromSkinnedMesh(uint id)
+{
+	Particle p = Particles[id];
+
+	int idx = id%_emitterCount;
+
+	PointData vtx = SkinnedPoints[idx];
+
+	p.position = vtx.CurrentPosition + (random(p.uv) -0.5)*float3(.01,.01,.01);
+
+	p.velocity = float3(0,0,0);
+	p.velocity = 50*(vtx.CurrentPosition - vtx.LastPosition);
+	p.life = 3;
+	p.age = 0;
+	p.uv = ToRadialCoords(p.position - _sphereCenter);
+
+	return p;
+
+}
+
+Particle EmitNewParticle(uint id)
+{
+	Particle p;
+	
+	p = EmitFromSkinnedMesh(id);
+	
+	return p;
+}
+
+[numthreads(NUM_THREADS, 1, 1)]
+void InitParticles(uint3 id : SV_DispatchThreadID)
+{
+	int stride = sqrt(_numParticles);
+	int2 xy = int2(id.x / stride, id.y / stride);
+	float2 uv = xy*_uvStep;
+
+	Particles[id.x].uv = uv;
+	
+	Particles[id.x] = EmitFromSphere(id.x);
+}
+
+float3 limit3(float3 vec, float value)
+{
+	float lengthSquared = length(vec);
+
+	if (lengthSquared > pow(value, 3) && lengthSquared > 0) {
+		float ratio = value / (float)pow(lengthSquared, 1 / 3);
+		vec *= ratio;
+	}
+	return vec;
+}
+
+[numthreads(NUM_THREADS, 1, 1)]
+void UpdateParticles(uint3 id : SV_DispatchThreadID)
+{
+	Particle p = Particles[id.x];
+
+	if (p.life < 0 || _maxLife < 0.01) {
+		Particles[id.x] = EmitNewParticle(id.x);
+		return;
+	}
+
+	float isInside = IsInsideVField(p.position);
+	float isOutside = 1 - isInside;
+
+	float3 vField = SampleVectorField(p.position);
+	float3 currVel = p.velocity;
+
+	float3 np = (p.position + _Time.xxx*float3(21.83, 13.28, 7.32)) * _noiseFrequency;
+	float3 n1 = snoise_grad(np);
+	float3 n2 = snoise_grad(np + float3(21.83, 13.28, 7.32));
+	float3 noise = limit3(_noiseAmplitude*0.1*cross(n1, n2), 2);
+
+	currVel += noise;
+
+	p.velocity = lerp(currVel, vField, _vectorFieldFollow);
+
+	p.velocity *= (1 - damping);
+	p.position = p.position + p.velocity*_dt;
+
+	float rnd = nrand(p.uv, 17)*0.5;
+	float x = _dt / _maxLife;
+	p.life -= lerp(rnd, 0, _maxLife);
+	p.age += _dt;
+
+
+	Particles[id.x] = p;
+}
+
+

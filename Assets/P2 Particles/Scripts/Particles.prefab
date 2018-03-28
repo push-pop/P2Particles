@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 1724804356363582}
+  m_IsPrefabParent: 1
+--- !u!1 &1724804356363582
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 4086007641448048}
+  - component: {fileID: 114963173946148202}
+  - component: {fileID: 114790502400959166}
+  m_Layer: 0
+  m_Name: Particles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4086007641448048
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1724804356363582}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114790502400959166
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1724804356363582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50bd76cc5a1a9ac4cadb55d1b6e37c4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _particles: {fileID: 114963173946148202}
+  _shader: {fileID: 4800000, guid: e6ef2a466ee7d484d99f2680a4214d81, type: 3}
+  _particleMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  _blendMode: 0
+  _remapFBM: {x: 0, y: 0, z: 0, w: 0}
+  _fbmFreq: 0
+  _particlize: 1
+  _particleSize: 0.218
+  _color: {r: 0.24264705, g: 0.17076348, b: 0.016057527, a: 0.378}
+  _falloff: 0
+  _hueSpeed: 0
+  _maxLife: 10
+  _debugVelocity: 0
+  _uvParam1: {fileID: 0}
+  _uvParam2: {fileID: 0}
+--- !u!114 &114963173946148202
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1724804356363582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21c6d1b60a5babd4ab40ddaa9a4c9914, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ComputeKernels: {fileID: 7200000, guid: 6f77dc628fb59984ca7a1e08f22cb137, type: 3}
+  _numParticles: 100489
+  _skinnedEmitter: {fileID: 0}
+  _restartSimulation: 0
+  _vectorField: {fileID: 0}
+  _vectorFieldFollow: 0.43
+  _uvParam1: {fileID: 0}
+  _uvParam2: {fileID: 0}
+  _centerAttractorMult: -6.84
+  _noiseAmplitude: 0
+  _damping: 0
+  _sphereRadius: 1
+  _maxLife: 0.02
+  _noiseFrequency: 0.11
+  doUpdate: 1
+  _explodeMult: 0
+  _camera: {fileID: 0}
