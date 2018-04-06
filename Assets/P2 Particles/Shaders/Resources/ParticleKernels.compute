@@ -3,13 +3,13 @@
 #pragma kernel UpdateParticles
 //#pragma kernel ClearGrid
 
-#include "BooleanOperators.hlsl"
-#include "SimplexNoiseGrad3D.cginc"
+#include "..\BooleanOperators.hlsl"
+#include "..\SimplexNoiseGrad3D.cginc"
 #include "UnityCG.cginc"
-#include "ParticleTypes.cginc"
-#include "VectorFields.hlsl"
+#include "..\ParticleTypes.cginc"
+#include "..\VectorFields.hlsl"
 
-#include "SkinnedCompute/PointData.cginc"
+#include "..\SkinnedCompute/PointData.cginc"
 
 #define NUM_THREADS 8
 
