@@ -16,13 +16,13 @@ public class P2Renderer : MonoBehaviour
 
 
     [SerializeField]
-    Particles2 _particles;
+    protected Particles2 _particles;
 
     [SerializeField]
-    Shader _shader;
+    protected Shader _shader;
 
     [SerializeField]
-    Mesh _particleMesh;
+    protected Mesh _particleMesh;
 
     public Mesh ParticleMesh
     {
@@ -58,17 +58,15 @@ public class P2Renderer : MonoBehaviour
     [SerializeField] Texture2D _uvParam1;
     [SerializeField] Texture2D _uvParam2;
 
-    private Material _renderMaterial;
+    protected Material _renderMaterial;
 
-    private ComputeBuffer _batchDrawArgs;
-    private ComputeBuffer _meshBuffer;
+    protected ComputeBuffer _batchDrawArgs;
+    protected ComputeBuffer _meshBuffer;
 
     // Use this for initialization
-    void Start()
+    protected void Start()
     {
-        if (_shader == null)
-            _shader = Shader.Find("P2/UnlitParticles");
-
+        Debug.Log("P2RendererStart");
         _renderMaterial = new Material(_shader);
 
         if (_uvParam1 == null)
@@ -124,6 +122,11 @@ public class P2Renderer : MonoBehaviour
 
     }
 
+    protected virtual void DoUpdateMaterialProperties()
+    {
+
+    }
+
     void UpdateMaterialProperties()
     {
         _renderMaterial.SetBuffer("Particles", _particles.ParticleBuffer);
@@ -150,6 +153,8 @@ public class P2Renderer : MonoBehaviour
         _renderMaterial.SetInt("_DebugVelocity", _debugVelocity ? 1 : 0);
 
         _renderMaterial.SetPass(0);
+
+        DoUpdateMaterialProperties();
     }
 
     private int GetSrcMode()
@@ -186,30 +191,21 @@ public class P2Renderer : MonoBehaviour
         }
     }
 
-    private void OnRenderObject()
+
+    public void RenderParticles()
     {
         UpdateMaterialProperties();
-        Graphics.DrawProceduralIndirect(MeshTopology.Triangles, _batchDrawArgs);
+
+        DoRenderParticles();
     }
 
-    private void OnValidate()
+    protected virtual void DoRenderParticles()
     {
-        if (_particles == null)
-            _particles = GetComponent<Particles2>();
 
-        if (_shader == null)
-            _shader = Shader.Find("P2/UnlitParticles");
+    }
 
-        if (_particleMesh == null)
-        {
-            // Any better way to do this ??
-            GameObject g = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            _particleMesh = g.GetComponent<MeshFilter>().sharedMesh;
-
-            UnityEditor.EditorApplication.delayCall += () =>
-            {
-                DestroyImmediate(g);
-            };
-        }
+    private void OnRenderObject()
+    {
+        RenderParticles();
     }
 }

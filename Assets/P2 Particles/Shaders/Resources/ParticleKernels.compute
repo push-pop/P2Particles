@@ -45,7 +45,7 @@ StructuredBuffer<float3> EmitterList;
 Texture2D _UVParam1;
 SamplerState sampler_UVParam1;
 
-Texture2D _UVParam2;
+Texture2D _UVParam2; 
 SamplerState sampler_UVParam2;
 
 float _explodeMult;

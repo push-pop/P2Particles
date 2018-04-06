@@ -3,19 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
-using UnityEditor;
-
-
-
 
 public class VectorFieldLoader : Singleton<VectorFieldLoader>
 {
     private Dictionary<string, VectorFieldTexture> _vFieldDictionary = new Dictionary<string, VectorFieldTexture>();
+
     #region Compute
 
     ComputeBuffer _vectorBuffer;
     ComputeBuffer _vFieldInfo;
 
+    [SerializeField]
     ComputeShader _bakeTextureShader;
 
     [System.Serializable]
@@ -38,6 +36,8 @@ public class VectorFieldLoader : Singleton<VectorFieldLoader>
     }
 
     #endregion
+
+    #region Loading Vectorfield Methods
 
     Vector3 to3D(int idx, FieldInfo info)
     {
@@ -200,6 +200,8 @@ public class VectorFieldLoader : Singleton<VectorFieldLoader>
         return v;
     }
 
+    #endregion
+
     #region CSV Parsing
     static public void DebugOutputGrid(string[,] grid)
     {
@@ -216,7 +218,6 @@ public class VectorFieldLoader : Singleton<VectorFieldLoader>
         }
         Debug.Log(textOutput);
     }
-
 
     // splits a CSV file into a 2D string array
     static private string[,] SplitCsvGrid(string csvText)
@@ -259,21 +260,10 @@ public class VectorFieldLoader : Singleton<VectorFieldLoader>
     }
     #endregion
 
- 
-    private void OnValidate()
+    private void Awake()
     {
         if (_bakeTextureShader == null)
-        {
-            AssetDatabase.FindAssets("BakeVectorField").ToList().ForEach(x =>
-            {
-                var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>(AssetDatabase.GUIDToAssetPath(x));
-                if (shader != null)
-                {
-                    _bakeTextureShader = shader;
-                    return;
-                }
+            _bakeTextureShader = Resources.Load<ComputeShader>("BakeVectorField");
 
-            });
-        }
     }
 }

@@ -48,12 +48,17 @@ public class Particles2 : MonoBehaviour
     ComputeShader ComputeKernels;
     //Instance
     private ComputeShader _kernels;
-
+     
     public Dictionary<Kernels, int> kernelDictionary;
 
     public ComputeBuffer ParticleBuffer
     {
-        get { return _particleBuffer; }
+        get {
+            if (_particleBuffer == null)
+                Debug.Log("Particle buffer is null?");
+
+            return _particleBuffer;
+        }
     }
     public ComputeBuffer MeshBuffer
     {
