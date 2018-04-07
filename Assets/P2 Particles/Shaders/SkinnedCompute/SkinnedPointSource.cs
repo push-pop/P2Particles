@@ -7,7 +7,14 @@ public class SkinnedPointSource : MonoBehaviour
 {
     public ComputeBuffer BakedPoints
     {
-        get { return _bakedPoints; }
+        get
+        {
+            if (_bakedPoints == null)
+            {
+                CreateBuffer();
+            }
+            return _bakedPoints;
+        }
     }
 
     public int VertexCount
@@ -20,7 +27,9 @@ public class SkinnedPointSource : MonoBehaviour
     Camera _cam;
     ComputeBuffer _bakedPoints;
     SkinnedMeshRenderer _target;
+    [SerializeField]
     Material _placeholderMaterial;
+    [SerializeField]
     Shader _replacementShader;
 
     public bool RenderBody = false;
@@ -28,8 +37,6 @@ public class SkinnedPointSource : MonoBehaviour
     // Use this for initialization
     void Awake()
     {
-        CreateMaterials();
-        CreateBuffer();
         BuildCamera();
         OverrideRenderer();
     }

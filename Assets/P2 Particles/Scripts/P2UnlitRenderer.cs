@@ -22,6 +22,7 @@ public class P2UnlitRenderer : P2Renderer
         Graphics.DrawProceduralIndirect(MeshTopology.Triangles, _batchDrawArgs);
     }
 
+#if UNITY_EDITOR
     private void OnValidate()
     {
         if (_particles == null)
@@ -42,4 +43,5 @@ public class P2UnlitRenderer : P2Renderer
             };
         }
     }
+#endif
 }

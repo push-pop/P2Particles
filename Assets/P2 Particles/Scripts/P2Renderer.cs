@@ -46,6 +46,20 @@ public class P2Renderer : MonoBehaviour
     public float _particleSize = .07f;
 
     public Color _color = new Color(0, 1, 1, .2f);
+
+    public Gradient _colorOverLife = new Gradient();
+
+    public Texture2D GradientTex
+    {
+        get
+        {
+            if (_gradientTex == null)
+                _gradientTex = _colorOverLife.ToTexture();
+            return _gradientTex;
+        }
+    }
+    Texture2D _gradientTex;
+
     [Range(0, 1)]
     public float _falloff = 1;
     [Range(0, 1)]
@@ -54,9 +68,6 @@ public class P2Renderer : MonoBehaviour
     public float _maxLife = 4;
 
     public bool _debugVelocity = false;
-
-    [SerializeField] Texture2D _uvParam1;
-    [SerializeField] Texture2D _uvParam2;
 
     protected Material _renderMaterial;
 
@@ -68,12 +79,6 @@ public class P2Renderer : MonoBehaviour
     {
         Debug.Log("P2RendererStart");
         _renderMaterial = new Material(_shader);
-
-        if (_uvParam1 == null)
-            _uvParam1 = Texture2D.whiteTexture;
-
-        if (_uvParam2 == null)
-            _uvParam2 = Texture2D.whiteTexture;
 
         if (_particles == null)
             _particles = GetComponent<Particles2>();
@@ -138,12 +143,12 @@ public class P2Renderer : MonoBehaviour
         _renderMaterial.SetFloat("_Particlize", _particlize);
         _renderMaterial.SetMatrix("_ObjectTransform", Matrix4x4.TRS(transform.position, transform.rotation, new Vector3(1, 1, 1)));
         _renderMaterial.SetColor("_Color", _color);
+        _renderMaterial.SetTexture("_ColorOverLife", GradientTex);
+
         _renderMaterial.SetFloat("_Falloff", _falloff);
         _renderMaterial.SetFloat("_HueSpeed", _hueSpeed);
         _renderMaterial.SetFloat("_NumParticles", _particles.NumParticles);
         _renderMaterial.SetFloat("_MaxLife", _maxLife);
-        _renderMaterial.SetTexture("_UVParam1", _uvParam1);
-        _renderMaterial.SetTexture("_UVParam2", _uvParam2);
         _renderMaterial.SetFloat("_FbmFreq", _fbmFreq);
         _renderMaterial.SetVector("_RemapFbm", _remapFBM);
         _renderMaterial.SetFloat("_FbmAmt", _fbmAmt);
