@@ -1,0 +1,26 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Multiply
+
+struct Vec
+{
+	float3 pos;
+	float3 vel;
+};
+
+RWStructuredBuffer<Vec> dataBuffer;
+
+float3 center;
+float speed = .1;
+float mass;
+
+[numthreads(16,1,1)]
+void Multiply (uint3 id : SV_DispatchThreadID)
+{
+	float dist = max(.2,distance (center, dataBuffer[id.x].pos));
+	float3 dir = (normalize(  center - dataBuffer[id.x].pos)*speed)/(dist*dist);
+
+	//dir *=speed;
+	dataBuffer[id.x].vel += dir;
+	dataBuffer[id.x].vel *= .99;
+ 	dataBuffer[id.x].pos += dataBuffer[id.x].vel;
+}

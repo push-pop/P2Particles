@@ -12,6 +12,7 @@ public class runShader : MonoBehaviour {
 
 	public Texture spriteTexture;
 	public float size;
+	public float speed;
 
 	public Vector3 center;
 
@@ -32,6 +33,8 @@ public class runShader : MonoBehaviour {
 	//ComputeBuffer _particleBuffer;
 
 	public bool debug;
+
+	public GameObject target;
 
 	struct Vec
 	{
@@ -100,7 +103,8 @@ public class runShader : MonoBehaviour {
 	void UpdateShaderProperties(){
 		computeShader.SetBuffer(kernel, "dataBuffer", buffer);
 		computeShader.Dispatch(kernel, data.Length, 1,1);
-		computeShader.SetVector ("center", center);
+		computeShader.SetVector ("center", target.transform.position);
+		computeShader.SetFloat ("speed", speed);
 	}
 
 	void UpdateMaterialProperties()

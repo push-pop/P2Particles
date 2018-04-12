@@ -1,5 +1,7 @@
 ﻿Shader "P2/UnlitParticles" {
+
 	Properties{
+
 		_Color("Color", Color) = (1,1,1,1)
 		_MainTex("Albedo (RGB)", 2D) = "white" {}
 
@@ -128,7 +130,7 @@
 //						o.noise = noise;
 						o.pID.x = pIndex;
 						o.pID.y = mIndex;
-						o.color = float4(1,1,1,1);//p.vel, p.age);
+						o.color = float4( abs(p.vel.x),abs(p.vel.y),abs(p.vel.z),1.0);//float4(1,1,1,1);//p.vel, p.age);
 						//TRANSFER_SHADOW(o)
 						return o;
 					}
@@ -136,7 +138,7 @@
 
 					fixed4 frag(v2f i) : SV_Target
 					{
-						return tex2D(_MainTex, i.uv);
+						return tex2D(_MainTex, i.uv)*.3*i.color;
 					}
 
 					ENDCG
