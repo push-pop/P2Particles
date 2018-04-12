@@ -15,6 +15,7 @@
 
 #define madfrac(A,B) mad((A), (B), -floor((A)*(B)))
 #define PHI (sqrt(5)*0.5 + 0.5)
+#define PI 3.1415926535897932384626433832795
 
 #pragma target 4.0
 
@@ -36,6 +37,10 @@ struct SystemInfo
 
 StructuredBuffer<Vortex> Vortices;
 RWStructuredBuffer<Particle> Particles;
+
+AppendStructuredBuffer<MeshData> GeometryOut;
+StructuredBuffer<MeshData> Mesh;
+
 StructuredBuffer<PointData> SkinnedPoints;
 
 RWStructuredBuffer<SystemInfo> Info;
@@ -66,6 +71,11 @@ float _homeAttractorMult;
 float2 _uvStep;
 float3 _sphereCenter;
 float _emitFromTransform;
+float3 _initialVelocity;
+float3 _initialVelocityRandom;
+int _meshIndexCount;
+
+
 #define _cubeSide 50; 
 int _homeIndex;
 
@@ -110,7 +120,7 @@ float2 ToRadialCoords(float3 position)
 	float3 norm = normalize(position);
 	float lat = acos(norm.y);
 	float lon = atan2(norm.z, norm.x);
-	float2 sphereCoords = float2(lon, lat)* float2(0.5 / UNITY_PI, 1.0 / UNITY_PI);
+	float2 sphereCoords = float2(lon, lat)* float2(0.5 / PI, 1.0 / PI);
 	return float2(0.5, 1.0) - sphereCoords;
 }
 
@@ -130,11 +140,16 @@ float nrand(float2 uv, float salt)
 	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
 }
 
+float3 nrand3(float2 uv) 
+{
+	return float3(nrand(uv, 1.2132341), nrand(uv, 12314.3424323), nrand(uv, 743645.3221433));
+}
+
 // Uniformaly distributed points on a unit sphere
 // http://mathworld.wolfram.com/SpherePointPicking.html 
 float3 random_point_on_sphere(float2 uv) {
 	//float u = random(uv) * 2 - 1;
-	//float theta = nrand(uv, 11) * UNITY_PI * 2;
+	//float theta = nrand(uv, 11) * PI * 2;
 	//float u2 = sqrt(1 - u * u);
 
 
@@ -155,7 +170,7 @@ float3 random_point_on_sphere(float2 uv) {
 float3 fibbonacci_point_on_sphere(float i, float n)
 {
 
-	float phi = 2 * UNITY_PI*madfrac(i, PHI - 1);
+	float phi = 2 * PI*madfrac(i, PHI - 1);
 	float cosTheta = 1 - (2 * i + 1)*rcp(n);
 	float sinTheta = sqrt(saturate(1 - cosTheta*cosTheta));
 	return float3(
@@ -178,9 +193,9 @@ float3x3 rotationMatrix(float3 axis, float angle)
 		oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z + c);
 }
 
-float3 RotateAroundYInDegrees(float3 vertex, float degrees)
+float3 RotateAroundYInDegrees(float3 vertex, float degrees) 
 {
-	float alpha = degrees * UNITY_PI / 180.0;
+	float alpha = degrees * PI / 180.0;
 	float sina, cosa;
 	sincos(alpha, sina, cosa);
 	float2x2 m = float2x2(cosa, -sina, sina, cosa);
@@ -218,6 +233,16 @@ Particle EmitFromCube(uint id)
 
 }
 
+void EmitFromTransform(inout Particle p)
+{
+	p.position = float3(0,0,0); 
+	float3 rand = nrand3(p.uv);
+
+	p.velocity = nrand3(p.uv)*float3(0,10,0);
+	p.age = 0;
+	p.life = 3;
+
+}
 
 Particle EmitFromSphere(uint id)
 {
@@ -272,10 +297,14 @@ Particle EmitFromSkinnedMesh(uint id)
 
 Particle EmitNewParticle(uint id)
 {
-	Particle p;
+	Particle p = Particles[id];;
 	
+	p.velocity = _initialVelocity + (nrand3(p.uv)-float3(.5,.5,.5))*_initialVelocityRandom;
+
 	p = EmitFromSkinnedMesh(id);
-	
+	//EmitFromTransform(p);
+
+
 	return p;
 }
 

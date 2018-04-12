@@ -7,19 +7,6 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(Particles2))]
 public class P2LitRenderer : P2Renderer
 {
-    public Gradient _colorOverLife = new Gradient();
-
-    public Texture2D GradientTex
-    {
-        get
-        {
-            if (_gradientTex == null)
-                _gradientTex = _colorOverLife.ToTexture();
-            return _gradientTex;
-        }
-    }
-    Texture2D _gradientTex;
-
     public Texture2D BumpMap;
     public float BumpAmt;
 
@@ -60,17 +47,22 @@ public class P2LitRenderer : P2Renderer
     
     protected override void DoUpdateMaterialProperties()
     {
-       // _renderMaterial.SetTexture("_BumpMap", BumpMap);
+        // _renderMaterial.SetTexture("_BumpMap", BumpMap);
         //_renderMaterial.SetFloat("_BumpScale", BumpAmt);
-
 //        _renderMaterial.SetPass(0);
+    }
+
+    private void LateUpdate()
+    {
+
+        Graphics.DrawMeshInstancedIndirect(_dummyMesh, 0, _renderMaterial, _dummyMesh.bounds, _batchDrawArgs, 0, null, ShadowCastingMode.On, true, gameObject.layer, Camera.main);
     }
 
     protected override void DoRenderParticles()
     {
-        Graphics.DrawMeshInstancedIndirect(_dummyMesh, 0, _renderMaterial, _dummyMesh.bounds, _batchDrawArgs, 0, null, ShadowCastingMode.On, true, gameObject.layer, Camera.main);
     }
 
+#if UNITY_EDITOR
     private void OnValidate()
     {
         if (_particles == null)
@@ -82,7 +74,7 @@ public class P2LitRenderer : P2Renderer
         if (_particleMesh == null)
         {
             // Any better way to do this ??
-            GameObject g = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            GameObject g = GameObject.CreatePrimitive(PrimitiveType.Cube);
             _particleMesh = g.GetComponent<MeshFilter>().sharedMesh;
 
             UnityEditor.EditorApplication.delayCall += () =>
@@ -91,4 +83,5 @@ public class P2LitRenderer : P2Renderer
             };
         }
     }
+#endif
 }

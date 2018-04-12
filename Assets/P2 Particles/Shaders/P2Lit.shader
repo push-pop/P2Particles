@@ -133,7 +133,6 @@
 				o.pID.y = mIndex;
 				o.color = float4(p.velocity, p.age);
 				o.color = tex2Dlod(_ColorOverLife, float4(p.age/_MaxLife,0,0,0));
-
 				o.noise = worldNormal;
 				v.vertex.xyz = o.pos.xyz;
 
@@ -146,7 +145,7 @@
 
 				float3 rgb = HUEtoRGB(hue);
 
-				o.Albedo = _Color.rgb;
+				o.Albedo = IN.color;
 				//o.Albedo = float3(IN.uv_MainTex.xy,0);
 
 				if (_DebugVelocity)
@@ -154,8 +153,8 @@
 
 				o.Normal = UnpackScaleNormal(tex2D(_BumpMap, IN.uv_MainTex), 1);
 				  
-				o.Smoothness = 0;
-				o.Metallic = 1;
+				o.Smoothness = 1;
+				o.Metallic = .3;
 				o.Emission = float3(0,0,0);
 				o.Alpha = 1;
 

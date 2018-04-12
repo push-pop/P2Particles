@@ -60,13 +60,15 @@ public class Particles2 : MonoBehaviour
             return _particleBuffer;
         }
     }
-    public ComputeBuffer MeshBuffer
-    {
-        get { return _meshBuffer; }
-    }
+    //ComputeBuffer _geometryBuffer;
+
+    //public ComputeBuffer MeshBuffer
+    //{
+    //    get { return _meshBuffer; }
+    //}
 
     ComputeBuffer _particleBuffer;
-    ComputeBuffer _meshBuffer;
+    //ComputeBuffer _meshBuffer;
     ComputeBuffer _batchDrawArgs;
     ComputeBuffer _vFieldInfo;
     ComputeBuffer _systemInfoBuffer;
@@ -91,6 +93,10 @@ public class Particles2 : MonoBehaviour
 
     [Range(0, 1)]
     public float _vectorFieldFollow;
+
+    public Vector3 _initialVelocity;
+
+    public Vector3 _initialVelocityRandom;
 
     [SerializeField]
     Texture2D _uvParam1;
@@ -121,6 +127,14 @@ public class Particles2 : MonoBehaviour
     //Private Variables
     private Vector2 _uvStep;
 
+    public Mesh ParticleMesh
+    {
+        get { return _particleMesh; }
+        set { _particleMesh = value; }
+    }
+    [SerializeField]
+    protected Mesh _particleMesh;
+
     #endregion
 
     #region Private Methods
@@ -137,6 +151,8 @@ public class Particles2 : MonoBehaviour
         UpdateComputeParameters();
 
         _kernels.SetBuffer(kernelDictionary[Kernels.InitParticles], "Particles", _particleBuffer);
+        //_kernels.SetBuffer(kernelDictionary[Kernels.InitParticles], "Geometry", _geometryBuffer);
+        //_kernels.SetBuffer(kernelDictionary[Kernels.InitParticles], "Mesh", _meshBuffer);
         _kernels.SetBuffer(kernelDictionary[Kernels.InitParticles], "Info", _systemInfoBuffer);
         _kernels.Dispatch(kernelDictionary[Kernels.InitParticles], _numParticles, 1, 1);
     }
@@ -180,8 +196,14 @@ public class Particles2 : MonoBehaviour
         _kernels.SetFloat("_centerAttractorMult", _centerAttractorMult);
         _kernels.SetFloat("_noiseFrequency", _noiseFrequency);
         _kernels.SetFloat("_vectorFieldFollow", _vectorFieldFollow);
+        _kernels.SetVector("_initialVelocity", _initialVelocity);
+        _kernels.SetVector("_initialVelocityRandom", _initialVelocityRandom);
         _kernels.SetVector("_uvStep", _uvStep);
 
+        //_kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "Mesh", _meshBuffer);
+
+        //_geometryBuffer.SetCounterValue(0);
+        //_kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "GeometryOut", _geometryBuffer);
 
         if (_skinnedEmitter != null && _skinnedEmitter.BakedPoints != null)
             _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "SkinnedPoints", _skinnedEmitter.BakedPoints);
@@ -189,10 +211,34 @@ public class Particles2 : MonoBehaviour
         _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "Particles", _particleBuffer);
     }
 
+    void CreateSpriteMeshBuffer()
+    {
+        var meshDataArray = new MeshData[ParticleMesh.triangles.Length];
+        for (int i = 0; i < ParticleMesh.vertices.Length; i++)
+        {
+            meshDataArray[i].vert = ParticleMesh.vertices[i];
+        }
+        for (int i = 0; i < ParticleMesh.uv.Length; i++)
+        {
+            meshDataArray[i].uv = ParticleMesh.uv[i];
+
+        }
+        for (int i = 0; i < ParticleMesh.triangles.Length; i++)
+        {
+            meshDataArray[i].index = ParticleMesh.triangles[i];
+        }
+
+        //_meshBuffer = new ComputeBuffer(meshDataArray.Length, MeshData.stride);
+        //_meshBuffer.SetData(meshDataArray);
+    }
+
     private void CreateBuffers()
     {
+        //CreateSpriteMeshBuffer();
+        //_geometryBuffer = new ComputeBuffer(_numParticles * _particleMesh.vertexCount, MeshData.stride, ComputeBufferType.Append);
         _particleBuffer = new ComputeBuffer(_numParticles, Particle.stride);
         _systemInfoBuffer = new ComputeBuffer(1, SystemInfo.stride);
+
     }
 
     private void BindComputeShaderBuffers()
@@ -212,8 +258,8 @@ public class Particles2 : MonoBehaviour
             _batchDrawArgs.Release();
         if (_vFieldInfo != null)
             _vFieldInfo.Release();
-        if (_meshBuffer != null)
-            _meshBuffer.Release();
+        //if (_meshBuffer != null)
+            //_meshBuffer.Release();
     }
 
     #endregion
