@@ -1,0 +1,18 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Multiply
+
+struct Vec
+{
+	float3 pos;
+	float3 vel;
+};
+
+RWStructuredBuffer<Vec> dataBuffer;
+
+float3 center;
+
+[numthreads(16,1,1)]
+void Multiply (uint3 id : SV_DispatchThreadID)
+{
+     dataBuffer[id.x].pos = dataBuffer[id.x].pos + center;
+}
