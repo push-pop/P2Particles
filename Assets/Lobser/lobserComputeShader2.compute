@@ -1,5 +1,9 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel Multiply
+#include "UnityCG.cginc"
+#define PHI (sqrt(5)*0.5 + 0.5)
+#define pi 3.1415926535897932384626433832795
+#define madfrac(A,B) mad((A), (B), -floor((A)*(B)))
 
 struct Vec
 {
@@ -8,19 +12,182 @@ struct Vec
 };
 
 RWStructuredBuffer<Vec> dataBuffer;
+RWStructuredBuffer<Vec> savedBuffer;
 
 float3 center;
-float speed = .1;
+
+float3 Left;
+float3 Right;
+float3 LeftB;
+float3 RightB;
+
+float3 LeftPrev;
+float3 RightPrev;
+
+float LeftTrigger;
+float RightTrigger;
+
+float LeftCymatics;
+float RightCymatics;
+
+float BezierLinearLerp;
+float DrawLine;
+
+float LeftSpeed;
+float RightSpeed;
+
+
 float mass;
+
+int drawLow;
+int drawHigh;
+
+int amount;
+
+//float pi = 3.14159265358979323846;
+
+float3 evaluateBezierPosition( float3 a, float3 b, float3 c, float3 d, float t )
+{
+    float3 p;
+    float OneMinusT = 1.0 - t;
+    float b0 = OneMinusT*OneMinusT*OneMinusT;
+    float b1 = 3.0*t*OneMinusT*OneMinusT;
+    float b2 = 3.0*t*t*OneMinusT;
+    float b3 = t*t*t;
+    return b0*a + b1*b + b2*c + b3*d;
+}
+
+// Version 3 https://stackoverflow.com/questions/5149544/can-i-generate-a-random-number-inside-a-pixel-shader
+float random(float2 p)
+{
+	float2 K1 = float2(
+		23.14069263277926 , // e^pi (Gelfond's constant)
+		2.665144142690225 // 2^sqrt(2) (Gelfondâ€“Schneider constant)
+		);
+	return frac(cos(dot(p, K1) ) * 12345.6789);
+}
+
+float nrand(float2 uv, float salt)
+{
+	uv += float2(salt, 12);
+	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+float3 nrand3(float2 uv) 
+{
+	return float3(nrand(uv, 1.2132341), nrand(uv, 12314.3424323), nrand(uv, 743645.3221433));
+}
+
+// Uniformaly distributed points on a unit sphere
+// http://mathworld.wolfram.com/SpherePointPicking.html 
+float3 random_point_on_sphere(float2 uv) {
+	//float u = random(uv) * 2 - 1;
+	//float theta = nrand(uv, 11) * PI * 2;
+	//float u2 = sqrt(1 - u * u);
+
+
+	//This algorithm has less artifacts:
+	float x1 = random(uv) * 2 - 1;
+	float x2 = nrand(uv, 17) * 2 - 1;
+
+	float term = sqrt(1 - x1*x1 - x2*x2);
+
+	return float3(
+		2 * x1*term,
+		2 * x2*term,
+		1 - 2 * (x1*x1 + x2*x2)
+		);
+	//return float3(u2 * cos(theta), u2 * sin(theta), u);
+}
+
+
+float3 fibbonacci_point_on_sphere(float i, float n)
+{
+
+	float phi = 2 * pi*madfrac(i, PHI - 1);
+	float cosTheta = 1 - (2 * i + 1)*rcp(n);
+	float sinTheta = sqrt(saturate(1 - cosTheta*cosTheta));
+	return float3(
+		cos(phi)*sinTheta,
+		sin(phi)*sinTheta,
+		cosTheta);
+}
+
+float3 randomSpherePoint(float3 rand) {
+  float ang1 = (rand.x + 1.0) * pi; // [-1..1) -> [0..2*PI)
+  float u = rand.y; // [-1..1), cos and acos(2v-1) cancel each other out, so we arrive at [-1..1)
+  float u2 = u * u;
+  float sqrt1MinusU2 = sqrt(1.0 - u2);
+  float x = sqrt1MinusU2 * cos(ang1);
+  float y = sqrt1MinusU2 * sin(ang1);
+  float z = u;
+  return float3(x, y, z);
+}
+
+//float clamp(float Min, float Max, float in){
+//	return min(Max,max(Min,in));
+//}
 
 [numthreads(16,1,1)]
 void Multiply (uint3 id : SV_DispatchThreadID)
 {
-	float dist = max(.2,distance (center, dataBuffer[id.x].pos));
-	float3 dir = (normalize(  center - dataBuffer[id.x].pos)*speed)/(dist*dist);
+	
+	float LeftDist = max(.2,distance (Left, dataBuffer[id.x].pos));
+	float3 LeftDir = (normalize(  Left - dataBuffer[id.x].pos)*LeftSpeed)/(LeftDist*LeftDist);
 
+	float RightDist = max(.2,distance (Right, dataBuffer[id.x].pos));
+	float3 RightDir = (normalize(  Right - dataBuffer[id.x].pos)*RightSpeed)/(RightDist*RightDist);
+
+	//BezierLinearLerp = 0;
 	//dir *=speed;
-	dataBuffer[id.x].vel += dir;
+	dataBuffer[id.x].vel += LeftDir + RightDir;
 	dataBuffer[id.x].vel *= .99;
- 	dataBuffer[id.x].pos += dataBuffer[id.x].vel;
+
+	amount = 1000000;
+
+	//float w = (sign(drawHigh-drawLow) + 1.0) *.5;
+
+
+
+	float t1 = ((id.x*1.0)-drawLow)/(drawHigh-drawLow);
+	//float t2 = (((id.x*1.0)-drawLow) % amount)/(drawHigh + (amount - drawLow));
+
+	float t = t1;//lerp(t2,t1,w);
+
+
+	if(id.x > drawLow && id.x < drawHigh){
+
+		float3 lerpLeft = lerp(Left,Right,.333);
+		float3 lerpRight = lerp(Left,Right,.666);
+
+		//float t = ((id.x*1.0)-drawLow)/(drawHigh-drawLow);
+
+
+		float which = sign(cos(id.x)+sign(RightTrigger)-sign(LeftTrigger) );
+		float LineDraw = sign(cos(id.x) + ((DrawLine*2)-1) );
+
+		float3 leftLine =  lerp(LeftPrev,Left,t)   + ( savedBuffer[id.x].pos * (1-LeftTrigger) * .2 );
+		float3 rightLine = lerp(RightPrev,Right,t) + ( savedBuffer[id.x].pos * (1-RightTrigger) * .2 );
+
+		float3 curve = evaluateBezierPosition(
+			Left + ( savedBuffer[id.x].pos * (1-LeftTrigger) * .2 ),
+	 		lerp(LeftB,lerpLeft,BezierLinearLerp) + ( savedBuffer[id.x].pos * (1-LeftTrigger) * .1 ),
+	 		lerp(RightB,lerpRight,BezierLinearLerp) + ( savedBuffer[id.x].pos * (1-RightTrigger) * .1 ),
+	 		Right + ( savedBuffer[id.x].pos * (1-RightTrigger) * .2 ),
+	 		t);
+
+	 	//dataBuffer[id.x].vel = float3(0,0,0);
+
+	 	float3 lines = lerp( leftLine , rightLine, .5+(which*.5));
+	 	float3 lerpedLines = lerp ( dataBuffer[id.x].pos , lines , sign(abs(sign(RightTrigger)+sign(LeftTrigger))) );
+	 	float3 lerpCurve = lerp(lerpedLines, curve, max(0.0,LineDraw));
+
+ 		dataBuffer[id.x].pos = lerpCurve;
+
+ 	}
+ 	else{
+ 		dataBuffer[id.x].pos += dataBuffer[id.x].vel;
+ 	}
+
 }
+

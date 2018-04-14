@@ -12,7 +12,8 @@ public class runShader : MonoBehaviour {
 
 	public Texture spriteTexture;
 	public float size;
-	public float speed;
+	public float rightSpeed;
+	public float leftSpeed;
 
 	public Vector3 center;
 
@@ -34,7 +35,22 @@ public class runShader : MonoBehaviour {
 
 	public bool debug;
 
-	public GameObject target;
+	public GameObject Left;
+	public GameObject LeftB;
+	public GameObject RightB;
+	public GameObject Right;
+
+	Vector3 LeftPrev;
+	Vector3 RightPrev;
+
+	public int drawAmount;
+	int drawLow;
+	int drawHigh;
+	public float DrawLine;
+	public float BezierLinearLerp;
+
+	public float RightTrigger;
+	public float LeftTrigger;
 
 	struct Vec
 	{
@@ -52,6 +68,8 @@ public class runShader : MonoBehaviour {
 		SetupComputeShader ();
 		Debug.Log (buffer.count);
 
+		drawHigh = drawAmount;
+
 	}
 
 	void Update(){
@@ -65,6 +83,7 @@ public class runShader : MonoBehaviour {
 
 		UpdateShaderProperties();
 		UpdateMaterialProperties ();
+		RenderParticles ();
 	}
 
 	void SetupComputeShader()
@@ -84,27 +103,63 @@ public class runShader : MonoBehaviour {
 
 		buffer = new ComputeBuffer(data.Length, Vec.stride);
 		buffer.SetData(data);
+		ComputeBuffer buffer2 = new ComputeBuffer(data.Length, Vec.stride);
+		buffer2.SetData(data);
 		kernel = computeShader.FindKernel("Multiply");
 		computeShader.SetBuffer(kernel, "dataBuffer", buffer);
+		computeShader.SetBuffer(kernel, "savedBuffer", buffer2);
 		computeShader.Dispatch(kernel, data.Length, 1,1);
 
 	}
 
-	private void OnRenderObject()
-	{
-		RenderParticles();
-	}
+//	private void OnRenderObject()
+//	{
+//		RenderParticles();
+//	}
 
 	void RenderParticles()
 	{
 		Graphics.DrawMeshInstancedIndirect(_dummyMesh, 0, renderMaterial, _dummyMesh.bounds, _batchDrawArgs, 0, null, ShadowCastingMode.Off, true, gameObject.layer, Camera.main);
 	}
 
+	void updateDrawAmounts(){
+		
+		drawHigh += drawAmount;
+		drawLow += drawAmount;
+
+		if (drawHigh > amount) {
+			drawHigh = drawHigh - amount ;
+		}
+
+		if (drawLow > amount) {
+			drawLow = drawLow - amount ;
+		}
+
+		computeShader.SetInt ("drawLow", drawLow);
+		computeShader.SetInt ("drawHigh", drawHigh);
+
+//		Debug.Log ("Low: " + drawLow + " drawHigh: " + drawHigh);
+	}
+
 	void UpdateShaderProperties(){
 		computeShader.SetBuffer(kernel, "dataBuffer", buffer);
 		computeShader.Dispatch(kernel, data.Length, 1,1);
-		computeShader.SetVector ("center", target.transform.position);
-		computeShader.SetFloat ("speed", speed);
+		computeShader.SetVector ("Left", Left.transform.position);
+		computeShader.SetVector ("LeftB", LeftB.transform.position);
+		computeShader.SetVector ("Right", Right.transform.position);
+		computeShader.SetVector ("RightB", RightB.transform.position);
+		computeShader.SetFloat ("LeftSpeed", leftSpeed);
+		computeShader.SetFloat ("RightSpeed", rightSpeed);
+		computeShader.SetVector ("LeftPrev", LeftPrev);
+		computeShader.SetVector ("RightPrev", RightPrev);
+		computeShader.SetFloat ("DrawLine", DrawLine);
+		computeShader.SetFloat ("LeftTrigger", LeftTrigger);
+		computeShader.SetFloat ("RightTrigger", RightTrigger);
+		computeShader.SetFloat ("BezierLinearLerp", BezierLinearLerp);
+
+		LeftPrev = Left.transform.position;
+		RightPrev = Right.transform.position;
+		updateDrawAmounts ();
 	}
 
 	void UpdateMaterialProperties()

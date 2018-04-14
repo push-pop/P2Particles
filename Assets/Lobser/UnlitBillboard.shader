@@ -130,7 +130,7 @@
 //						o.noise = noise;
 						o.pID.x = pIndex;
 						o.pID.y = mIndex;
-						o.color = float4( abs(p.vel.x),abs(p.vel.y),abs(p.vel.z),1.0);//float4(1,1,1,1);//p.vel, p.age);
+						o.color = float4( abs(p.vel.x)+.021,abs(p.vel.y)+.021,abs(p.vel.z)+.021,1.0);//float4(1,1,1,1);//p.vel, p.age);
 						//TRANSFER_SHADOW(o)
 						return o;
 					}
@@ -138,7 +138,7 @@
 
 					fixed4 frag(v2f i) : SV_Target
 					{
-						return tex2D(_MainTex, i.uv)*.3*i.color;
+						return tex2D(_MainTex, i.uv)*i.color;
 					}
 
 					ENDCG
