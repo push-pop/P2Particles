@@ -184,6 +184,9 @@ public class VectorFieldLoader : Singleton<VectorFieldLoader>
 
     public VectorFieldTexture GetField(TextAsset t)
     {
+        if (_bakeTextureShader == null)
+            _bakeTextureShader = Resources.Load<ComputeShader>("BakeVectorField");
+
         VectorFieldTexture v = null;
         var name = t.name.ToLower();
         if (!_vFieldDictionary.TryGetValue(name, out v))
@@ -259,11 +262,4 @@ public class VectorFieldLoader : Singleton<VectorFieldLoader>
                 select m.Groups[1].Value).ToArray();
     }
     #endregion
-
-    private void Awake()
-    {
-        if (_bakeTextureShader == null)
-            _bakeTextureShader = Resources.Load<ComputeShader>("BakeVectorField");
-
-    }
 }

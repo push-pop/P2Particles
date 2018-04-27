@@ -27,7 +27,7 @@ Shader "P2/Replacement"
 			struct appdata
 			{
 				float4 vertex : POSITION;
-				float2 texcoord : TEXCOORD0;
+				float3 texcoord : TEXCOORD0;
 				half3 normal : NORMAL;
 				half4 tangent : TANGENT;
 				uint vid : SV_VERTEXID;
@@ -35,11 +35,11 @@ Shader "P2/Replacement"
 
 			struct v2f
 			{
-				float4 position : SV_POSITION;
-				float3 texcoord : TEXCOORD0;
+				float3 position : TEXCOORD0;
+				float3 texcoord : TEXCOORD1;
 				half3 normal : NORMAL;
 				half4 tangent : TANGENT;
-				half id : TEXCOORD1;
+				half id : TEXCOORD2;
 			};
 
 			RWStructuredBuffer<PointData> _PointBuffer : register(u1);
@@ -49,12 +49,23 @@ Shader "P2/Replacement"
 			
 			v2f vert (appdata v)
 			{
+			PointData p = _PointBuffer[v.vid];
+
 				v2f o;
-				o.position = float4(v.texcoord.x * 2 - 1, 0, 0, 1);
-				o.texcoord = mul(unity_ObjectToWorld, v.vertex).xyz;
+				o.position = mul(unity_ObjectToWorld, v.vertex).xyz;
+				o.texcoord = v.texcoord;
+				//o.texcoord = v.texcoord;
 				o.normal = UnityObjectToWorldNormal(v.normal);
 				o.tangent = half4(UnityObjectToWorldDir(v.tangent.xyz), v.tangent.w);
 				o.id= v.vid;
+
+				p.LastPosition = p.CurrentPosition;
+				p.CurrentPosition = o.position;
+				p.Normal = o.normal;
+				p.Tangent = o.tangent;
+				p.uv = o.texcoord;
+
+				_PointBuffer[o.id] = p;
 
 				return o;
 			}
@@ -62,18 +73,11 @@ Shader "P2/Replacement"
 			fixed4 frag (v2f i) : SV_Target
 			{
 				
-				PointData p = _PointBuffer[i.id];
 
-				p.LastPosition = p.CurrentPosition;
-				p.CurrentPosition = i.texcoord;
-				p.Normal = i.normal;
-				p.Tangent = i.tangent;
-
-				_PointBuffer[i.id] = p;
 
 				discard;
-
-				return float4(p.CurrentPosition, 1);
+				return 0;
+				//return float4(p.CurrentPosition, 1);
 
 			}
 			ENDCG

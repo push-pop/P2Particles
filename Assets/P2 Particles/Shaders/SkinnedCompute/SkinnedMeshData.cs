@@ -10,8 +10,9 @@ public struct PointData
     public Vector3 CurrentPosition;
     public Vector3 Normal;
     public Vector3 Tangent;
+    public Vector2 uv;
 
-    public const int stride = 12*sizeof(float);
+    public const int stride = 14*sizeof(float);
 }
 
 public class SkinnedMeshData : ScriptableObject
@@ -46,11 +47,13 @@ public class SkinnedMeshData : ScriptableObject
         var inNormals = source.normals;
         var inTangents = source.tangents;
         var inBoneWeights = source.boneWeights;
+        var inUVs = source.uv;
 
         // Enumerate unique vertices.
         var outVertices = new List<Vector3>();
         var outNormals = new List<Vector3>();
         var outTangents = new List<Vector4>();
+        var outUVs = new List<Vector2>();
         var outBoneWeights = new List<BoneWeight>();
 
         for (var i = 0; i < inVertices.Length; i++)
@@ -61,13 +64,14 @@ public class SkinnedMeshData : ScriptableObject
                 outNormals.Add(inNormals[i]);
                 outTangents.Add(inTangents[i]);
                 outBoneWeights.Add(inBoneWeights[i]);
+                outUVs.Add(inUVs[i]);
             }
         }
 
         // Assign unique UVs to the vertices.
-        var outUVs = Enumerable.Range(0, outVertices.Count).
-            Select(i => Vector2.right * (i + 0.5f) / outVertices.Count).ToList();
-
+       // var outUVs = Enumerable.Range(0, outVertices.Count).
+         //   Select(i => Vector2.right * (i + 0.5f) / outVertices.Count).ToList();
+        
         // Enumerate vertex indices.
         var indices = Enumerable.Range(0, outVertices.Count).ToArray();
 

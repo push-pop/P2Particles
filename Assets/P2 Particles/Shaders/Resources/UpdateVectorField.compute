@@ -1,0 +1,81 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma kernel DampKernel
+
+struct VectorFieldInfo
+{
+	float3 center;
+	float3 resolution;
+	float3 boundingMinimum;
+	float3 boundingMaximum;
+	float fieldScale;
+	float forceScale;
+	int numVectors;
+};
+
+struct FieldInfluencer
+{
+	float3 position;
+	float3 velocity;
+	float scale;
+};
+
+float								_dt;
+int									_texRes;
+int									_influencerCount;
+StructuredBuffer<FieldInfluencer>	_influencers;
+
+RWTexture3D<float4>					_dynamic;
+Texture3D<float4>					_baseField;
+
+// 0 baseField 1 dynamic field
+StructuredBuffer<VectorFieldInfo>	_vFieldInfo;
+float								_damping;
+
+uint3 to3D(uint id, uint3 res)
+{
+	return uint3(id % res.x,
+		(id / res.x) % res.y,
+		id / (res.x * res.y));
+} 
+
+[numthreads(8,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	uint3 tIdx = float3(id.x % 10, (id.x / 10) % 10, id.x / (10 * 10));
+	
+	FieldInfluencer inf = _influencers[0];
+	
+	float4 curr = _dynamic[tIdx]; 
+	//curr.xyz += -inf.velocity;
+	
+	VectorFieldInfo info = _vFieldInfo[0];
+
+	float3 pos = /*(info.fieldScale)*/( inf.position- info.center);
+
+	half res = 5;
+
+	half3 pp = (res*pos + float3(res,res,res));
+	uint3 pIdx = uint3(pp.x,pp.y,pp.z);
+
+	if(length(pIdx - tIdx) > 0) 
+	{ 
+	 
+	} 
+	else
+		curr.xyz = -inf.scale*10*inf.velocity;
+		
+
+	_dynamic[tIdx] = curr;
+}
+
+[numthreads(8,1,1)]
+void DampKernel (uint3 id : SV_DispatchThreadID)
+{
+	VectorFieldInfo info = _vFieldInfo[0];
+
+	uint3 tIdx = float3(id.x % 10, (id.x / 10) % 10, id.x / (10 * 10));
+
+	_dynamic[tIdx] = lerp(_dynamic[tIdx], _baseField[tIdx], _dt*_damping);
+}
+

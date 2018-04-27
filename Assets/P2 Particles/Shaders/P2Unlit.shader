@@ -21,6 +21,7 @@
 						CGPROGRAM
 						#pragma vertex vert
 						#pragma fragment frag
+
 						//#pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight
 						#pragma target 5.0
 
@@ -39,7 +40,6 @@
 							sampler2D _MainTex;
 							sampler2D _AlphaMap;
 							float4 _AlphaMap_ST;
-							float4 _Color;
 							half _Scale;
 							half _ScaleSpeed;
 							half _ScaleFreq;
@@ -61,7 +61,10 @@
 							sampler2D _UVParam1;
 							sampler2D _UVParam2;
 
+							sampler2D _ColorOverLife;
+
 							bool _DebugVelocity;
+							bool _CullLife;
 
 							struct v2f
 							{
@@ -124,8 +127,8 @@
 								float3 ambient = ShadeSH9(float4(worldNormal, 1.0f));
 
 								//Optimization to clip verts of old particles
-								localPosition += when_gt(p.age, _MaxLife)*float3(100000,100000, 100000);
-
+								if(_CullLife)
+									localPosition += when_gt(p.age, _MaxLife)*float3(100000,100000, 100000);
 								v2f o;
 
 								o.pos = UnityObjectToClipPos(localPosition);
@@ -135,7 +138,8 @@
 								o.noise = noise;
 								o.pID.x = pIndex;
 								o.pID.y = mIndex;
-								o.color = float4(p.velocity, p.age);
+								//o.color = float4(p.velocity, p.age);
+								o.color = tex2Dlod(_ColorOverLife, float4(smoothstep(0,_MaxLife, p.age), 0, 0, 0));
 								//TRANSFER_SHADOW(o)
 								return o;
 							}
@@ -170,7 +174,7 @@
 						float circle(float2 uv)
 						{
 							half x = length(uv - 0.5) * 2;
-							return 1 - smoothstep(.5, 1, x);
+							return 1 - smoothstep(1-_Softness, 1, x);
 						}
 
 						float remap(float value, float low1, float high1, float low2, float high2)
@@ -179,20 +183,19 @@
 						}
 
 						fixed4 frag(v2f i) : SV_Target
-						{
+						{ 
 							float uv = TRANSFORM_TEX(i.uv, _AlphaMap);
 							fixed4 albedo = tex2D(_MainTex, i.uv);
 							float4 alpha = hexagon(i.uv)* tex2D(_AlphaMap, i.uv);
 
-							fixed4 output = _Color;
+							fixed4 output = i.color;
 							float shape = circle(i.uv);
 
 							float3 camVec = _WorldSpaceCameraPos - i.pos;
 
-							output = _Color;
 							
 							if (_DebugVelocity)
-								output = i.color*_Color.a;
+								output = i.color;
 
 							float a = fbm(float3(i.ambient * 10 * _FbmFreq + _Time.xyz / 5));
 							a = remap(a, _RemapFbm.x, _RemapFbm.y, _RemapFbm.z, _RemapFbm.w);
@@ -201,7 +204,7 @@
 							a *= lerp(1, shape, _Particlize);
 
 							if (_BlendEnum == BLEND_ADD || _BlendEnum == BLEND_SOFT_ADD) {
-								output.rgb *= a*_Color.a;
+								output.rgb *= a*i.color.a;
 							}
 							else
 							{

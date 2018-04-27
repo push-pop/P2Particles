@@ -13,6 +13,7 @@ struct Particle
 	float2 uv;
 	float life;
 	float age;
+	float2 meshUV;
 };
   
  

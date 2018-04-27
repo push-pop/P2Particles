@@ -27,8 +27,12 @@ public class SkinnedPointSource : MonoBehaviour
     Camera _cam;
     ComputeBuffer _bakedPoints;
     SkinnedMeshRenderer _target;
-    [SerializeField]
+
     Material _placeholderMaterial;
+
+    [SerializeField]
+    Shader _placeholderShader;
+
     [SerializeField]
     Shader _replacementShader;
 
@@ -37,6 +41,7 @@ public class SkinnedPointSource : MonoBehaviour
     // Use this for initialization
     void Awake()
     {
+        _placeholderMaterial = new Material(_placeholderShader);
         BuildCamera();
         OverrideRenderer();
     }
@@ -102,9 +107,16 @@ public class SkinnedPointSource : MonoBehaviour
         _target.enabled = RenderBody;
     }
 
+    private void OnDestroy()
+    {
+        if (_bakedPoints != null)
+            _bakedPoints.Release();
+    }
+
+#if UNITY_EDITOR
     private void CreateMaterials()
     {
-        _placeholderMaterial = new Material(Shader.Find("P2/Placeholder"));
+        _placeholderShader = Shader.Find("P2/Placeholder");
         _replacementShader = Shader.Find("P2/Replacement");
     }
 
@@ -112,5 +124,6 @@ public class SkinnedPointSource : MonoBehaviour
     {
         CreateMaterials();
     }
+#endif
 
 }

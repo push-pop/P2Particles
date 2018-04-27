@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c33c42d7ba8a29d478bd6568831f82b7, type: 3}
+  m_Name: AvatarProfile2
+  m_EditorClassIdentifier: 
+  _blendMode: 2
+  _remapFBM: {x: 0, y: 1, z: 0, w: 1}
+  _scaleByDist: {x: 0.2, y: 1, z: 1, w: 1}
+  _scaleOnTime: 1
+  _fbmAmt: 1
+  _fbmFreq: 1
+  _particlize: 1
+  _particleSize: 0.212
+  _color: {r: 0, g: 1, b: 0.5448277, a: 1}
+  _falloff: 1
+  _hueSpeed: 0
+  _maxLife: 16.2
+  _uvFade: 3
+  _debugVelocity: 0

@@ -25,6 +25,8 @@ public class P2UnlitRenderer : P2Renderer
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        _rebuildGradient = true;
+
         if (_particles == null)
             _particles = GetComponent<Particles2>();
 

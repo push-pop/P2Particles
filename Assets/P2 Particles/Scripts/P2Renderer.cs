@@ -44,17 +44,34 @@ public class P2Renderer : MonoBehaviour
     public float _particlize = 1.0f;
     [Range(0.001f, .5f)]
     public float _particleSize = .07f;
+    [Range(0f,1f)]
+    public float _softness;
 
-    public Color _color = new Color(0, 1, 1, .2f);
-
-    public Gradient _colorOverLife = new Gradient();
+    public Gradient ColorOverLife
+    {
+        get
+        {
+            return _colorOverLife;
+        }
+        set
+        {
+            _colorOverLife = value;
+        }
+    }
+    [SerializeField]
+    Gradient _colorOverLife = new Gradient();
+    protected bool _rebuildGradient = false;
 
     public Texture2D GradientTex
     {
         get
         {
-            if (_gradientTex == null)
+            if (_gradientTex == null || _rebuildGradient)
+            {
                 _gradientTex = _colorOverLife.ToTexture();
+                _rebuildGradient = false;
+            }
+
             return _gradientTex;
         }
     }
@@ -65,7 +82,8 @@ public class P2Renderer : MonoBehaviour
     [Range(0, 1)]
     public float _hueSpeed = 0;
     [Range(0, 100)]
-    public float _maxLife = 4;
+    public float _renderLife = 4;
+    public bool _cullLife = false;
 
     public bool _debugVelocity = false;
 
@@ -73,6 +91,7 @@ public class P2Renderer : MonoBehaviour
 
     protected ComputeBuffer _batchDrawArgs;
     protected ComputeBuffer _meshBuffer;
+    public float _scaleOnTime;
 
     // Use this for initialization
     protected void Start()
@@ -142,13 +161,12 @@ public class P2Renderer : MonoBehaviour
         _renderMaterial.SetFloat("_Scale", _particleSize);
         _renderMaterial.SetFloat("_Particlize", _particlize);
         _renderMaterial.SetMatrix("_ObjectTransform", Matrix4x4.TRS(transform.position, transform.rotation, new Vector3(1, 1, 1)));
-        _renderMaterial.SetColor("_Color", _color);
         _renderMaterial.SetTexture("_ColorOverLife", GradientTex);
-
+        _renderMaterial.SetFloat("_Softness", _softness);
         _renderMaterial.SetFloat("_Falloff", _falloff);
         _renderMaterial.SetFloat("_HueSpeed", _hueSpeed);
         _renderMaterial.SetFloat("_NumParticles", _particles.NumParticles);
-        _renderMaterial.SetFloat("_MaxLife", _maxLife);
+        _renderMaterial.SetFloat("_MaxLife", _renderLife);
         _renderMaterial.SetFloat("_FbmFreq", _fbmFreq);
         _renderMaterial.SetVector("_RemapFbm", _remapFBM);
         _renderMaterial.SetFloat("_FbmAmt", _fbmAmt);
@@ -156,7 +174,7 @@ public class P2Renderer : MonoBehaviour
         _renderMaterial.SetInt("_DstMode", GetDstMode());
         _renderMaterial.SetInt("_BlendEnum", (int)_blendMode);
         _renderMaterial.SetInt("_DebugVelocity", _debugVelocity ? 1 : 0);
-
+        _renderMaterial.SetInt("_CullLife", _cullLife ? 1 : 0);
         _renderMaterial.SetPass(0);
 
         DoUpdateMaterialProperties();
@@ -213,4 +231,5 @@ public class P2Renderer : MonoBehaviour
     {
         RenderParticles();
     }
+
 }

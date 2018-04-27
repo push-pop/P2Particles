@@ -149,7 +149,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 421936230}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e04f5e50cd25d4df6ad5fe43d1f88cca, type: 3}
   m_Name: 
@@ -256,9 +256,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _meshData: {fileID: 11400000, guid: eb6ec597a7593f44ba3202f14cadf2e2, type: 2}
-  _placeholderMaterial: {fileID: 1796607301}
+  _placeholderShader: {fileID: 4800000, guid: e713f7d02e16a024db44395a4a136ce6, type: 3}
   _replacementShader: {fileID: 4800000, guid: 1cab1d4d52af84249ae1369c6f1a953e, type: 3}
-  RenderBody: 1
+  RenderBody: 0
 --- !u!137 &578866705
 SkinnedMeshRenderer:
   m_ObjectHideFlags: 0
@@ -547,9 +547,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _fieldScale: 2.78
   _forceScale: 1
-  _fieldAsset: {fileID: 4900000, guid: 03884af9640f9d647bff94e4cc21dfa2, type: 3}
+  _fieldAsset: {fileID: 4900000, guid: 919d6646b2130e94c9b5606865c4f870, type: 3}
   _textureWrapMode: 1
   _swapYZ: 1
+  _dynamic: 0
+  _dynamicFieldResolution: 10
+  _fieldInfluencers: []
+  _damping: 0.5
+  _vField:
+    hasLoaded: 0
+    _vectorField: {fileID: 0}
+    _wrapMode: 0
+    _swapYZ: 0
+    Field: {fileID: 0}
+    _vectorInfo: []
+    _info:
+      Resolution: {x: 0, y: 0, z: 0}
+      BoundingMinimum: {x: 0, y: 0, z: 0}
+      BoundingMaximum: {x: 0, y: 0, z: 0}
+  _dynamicField:
+    hasLoaded: 0
+    _vectorField: {fileID: 0}
+    _wrapMode: 0
+    _swapYZ: 0
+    Field: {fileID: 0}
+    _vectorInfo: []
+    _info:
+      Resolution: {x: 0, y: 0, z: 0}
+      BoundingMinimum: {x: 0, y: 0, z: 0}
+      BoundingMaximum: {x: 0, y: 0, z: 0}
+  _clearDynamic: 0
 --- !u!4 &1364891232
 Transform:
   m_ObjectHideFlags: 0
@@ -563,26 +590,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &1796607301
-Material:
-  serializedVersion: 6
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: P2/Placeholder
-  m_Shader: {fileID: 4800000, guid: e713f7d02e16a024db44395a4a136ce6, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs: []
-    m_Floats: []
-    m_Colors: []
 --- !u!1 &1825024521
 GameObject:
   m_ObjectHideFlags: 0
@@ -762,7 +769,7 @@ MonoBehaviour:
   _fbmFreq: 1
   _particlize: 1
   _particleSize: 0.05
-  _color: {r: 0, g: 1, b: 1, a: 0.2}
+  _softness: 0
   _colorOverLife:
     serializedVersion: 2
     key0: {r: 0.52352965, g: 0, b: 0.85294116, a: 1}
@@ -794,8 +801,10 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   _falloff: 1
   _hueSpeed: 0
-  _maxLife: 4
+  _renderLife: 4
+  _cullLife: 0
   _debugVelocity: 0
+  _scaleOnTime: 0
   BumpMap: {fileID: 2800000, guid: ca7ba913502c8bb44a66350131805326, type: 3}
   BumpAmt: 0
   _dummyMesh: {fileID: 0}
@@ -815,15 +824,15 @@ MonoBehaviour:
   _particleMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   _blendMode: 2
   _remapFBM: {x: 0, y: 1, z: 0, w: 1}
-  _fbmAmt: 1
+  _fbmAmt: 0
   _fbmFreq: 1
   _particlize: 1
-  _particleSize: 0.07
-  _color: {r: 0, g: 1, b: 1, a: 0.2}
+  _particleSize: 0.045
+  _softness: 0
   _colorOverLife:
     serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
+    key0: {r: 0.52352965, g: 0, b: 0.85294116, a: 0.22745098}
+    key1: {r: 0, g: 0.83201027, b: 0.8679245, a: 0.12941177}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
@@ -831,7 +840,7 @@ MonoBehaviour:
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 0
-    ctime1: 65535
+    ctime1: 64957
     ctime2: 0
     ctime3: 0
     ctime4: 0
@@ -851,8 +860,10 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   _falloff: 1
   _hueSpeed: 0
-  _maxLife: 4
+  _renderLife: 4
+  _cullLife: 0
   _debugVelocity: 0
+  _scaleOnTime: 0
 --- !u!114 &2143633080
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -865,21 +876,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21c6d1b60a5babd4ab40ddaa9a4c9914, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MAX_PARTICLES: 10000
   ComputeKernels: {fileID: 7200000, guid: 6f77dc628fb59984ca7a1e08f22cb137, type: 3}
   _numParticles: 500000
+  _emissionMode: 2
   _skinnedEmitter: {fileID: 578866704}
+  _emissionRadius: 1
   _restartSimulation: 0
   _vectorField: {fileID: 1364891231}
-  _vectorFieldFollow: 0
+  _vectorFieldFollow: 1
   _initialVelocity: {x: 0, y: 1, z: 0}
   _initialVelocityRandom: {x: 0.5, y: 0, z: 0.5}
-  _uvParam1: {fileID: 0}
+  _constantForce: {x: 0, y: 0, z: 0}
   _uvParam2: {fileID: 0}
   _centerAttractorMult: 0
   _noiseAmplitude: 0
   _noiseFrequency: 0.03
   _damping: 0
+  _maxSpeed: 10
   _sphereRadius: 1
   _maxLife: 0.5
   doUpdate: 1
-  _particleMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  _lifeOffset: 0

@@ -1,8 +1,6 @@
 ﻿Shader "P2/LitParticles" {
 	Properties{
 	  _MainTex("Texture", 2D) = "white" {}
-	  _Color("Color", Color) = (1,1,1,1)
-
 	  _EmissionColor("Emission", Color) = (0,0,0)
 
 
@@ -149,7 +147,7 @@
 				//o.Albedo = float3(IN.uv_MainTex.xy,0);
 
 				if (_DebugVelocity)
-				o.Albedo = max( length(IN.color.rgb)*HUEtoRGB(0), _Color.rgb);
+					o.Albedo = max( length(IN.color.rgb)*HUEtoRGB(0), IN.color.rgb);
 
 				o.Normal = UnpackScaleNormal(tex2D(_BumpMap, IN.uv_MainTex), 1);
 				  

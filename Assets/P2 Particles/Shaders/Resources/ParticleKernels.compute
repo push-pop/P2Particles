@@ -3,12 +3,12 @@
 #pragma kernel UpdateParticles
 //#pragma kernel ClearGrid
 
+#include "UnityCG.cginc"
+
 #include "..\BooleanOperators.hlsl"
 #include "..\SimplexNoiseGrad3D.cginc"
-#include "UnityCG.cginc"
 #include "..\ParticleTypes.cginc"
 #include "..\VectorFields.hlsl"
-
 #include "..\SkinnedCompute/PointData.cginc"
 
 #define NUM_THREADS 8
@@ -59,12 +59,14 @@ float life_mult;
 int vortex_count;
 int _emitterCount;
 float damping;
-float _sphereRadius;
+float _emissionRadius;
 float _numParticles;
 float _dt;
 float _maxLife;
+float _maxSpeed;
 float _noiseAmplitude;
 float _centerAttractorMult;
+float3 _constantForce;
 float _vectorFieldFollow;
 float _noiseFrequency;
 float _homeAttractorMult;
@@ -76,8 +78,9 @@ float3 _initialVelocityRandom;
 int _meshIndexCount;
 
 
-#define _cubeSide 50; 
+float _cubeSide; 
 int _homeIndex;
+int _emissionMode;
 
 uint3 to3D(uint id)
 {
@@ -140,31 +143,26 @@ float nrand(float2 uv, float salt)
 	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
 }
 
-float3 nrand3(float2 uv) 
-{
-	return float3(nrand(uv, 1.2132341), nrand(uv, 12314.3424323), nrand(uv, 743645.3221433));
-}
-
 // Uniformaly distributed points on a unit sphere
 // http://mathworld.wolfram.com/SpherePointPicking.html 
 float3 random_point_on_sphere(float2 uv) {
-	//float u = random(uv) * 2 - 1;
-	//float theta = nrand(uv, 11) * PI * 2;
-	//float u2 = sqrt(1 - u * u);
+	float u = random(uv) * 2 - 1;
+	float theta = nrand(uv+ _Time.xy, 11) * UNITY_PI * 2;
+	float u2 = sqrt(1 - u * u);
 
 
 	//This algorithm has less artifacts:
-	float x1 = random(uv) * 2 - 1;
-	float x2 = nrand(uv, 17) * 2 - 1;
+	float x1 = random(uv + _Time.zz) * 2 - 1;
+	float x2 = nrand(uv, 17 + _Time.xy) * 2 - 1;
 
-	float term = sqrt(1 - x1*x1 - x2*x2);
+	float term = sqrt(1 - x1*x1 - x2*x2); 
 
-	return float3(
-		2 * x1*term,
-		2 * x2*term,
-		1 - 2 * (x1*x1 + x2*x2)
-		);
-	//return float3(u2 * cos(theta), u2 * sin(theta), u);
+	//return float3(
+	//	2 * x1*term,
+	//	2 * x2*term,
+	//	1 - 2 * (x1*x1 + x2*x2)
+	//	);
+	return float3(u2 * cos(theta), u2 * sin(theta), u);
 }
 
 float3 fibbonacci_point_on_sphere(float i, float n)
@@ -215,45 +213,43 @@ float4x4 rotationMatrix4(float3 axis, float angle)
 		0.0, 0.0, 0.0, 1.0);
 }
 
+float2 IdToUV(uint id)
+{
+	int stride = sqrt(_numParticles);
+	int2 xy = int2(id % stride, id / stride);
+	return xy*_uvStep;
+}
+
 Particle EmitFromCube(uint id)
 {
 	Particle p = Particles[id];
 
 	uint3 coords = to3D(id);
+	float step =  2*_emissionRadius/_cubeSide;
+	float3 start = -float3(-_emissionRadius + step/2, -_emissionRadius + step/2, -_emissionRadius + step/2);
 
-	float step =  2*_sphereRadius/_cubeSide;
-	float3 start = -float3(-_sphereRadius + step/2, -_sphereRadius + step/2, -_sphereRadius + step/2);
-
-	p.position = start - step*coords;
+	p.position = start - step*coords + _sphereCenter;
 
 	p.life = 3;
-	p.uv = ToRadialCoords(p.position - _sphereCenter);
+	//p.uv = ToRadialCoords(p.position - _sphereCenter);
 
 	return p;
 
 }
 
-void EmitFromTransform(inout Particle p)
-{
-	p.position = float3(0,0,0); 
-	float3 rand = nrand3(p.uv);
-
-	p.velocity = nrand3(p.uv)*float3(0,10,0);
-	p.age = 0;
-	p.life = 3;
-
-}
 
 Particle EmitFromSphere(uint id)
 {
 	Particle p = Particles[id];
+	p.uv = IdToUV(id);
 
 	//float4 vert = float4(random_point_on_sphere(p.uv), 1);
-	float4 vert = float4(fibbonacci_point_on_sphere(id, _numParticles), 1);
-	p.position = _sphereCenter + _sphereRadius*vert;
+	//float4 vert = float4(fibbonacci_point_on_sphere(id, _numParticles), 1);
+	float4 vert = float4(random_point_on_sphere(p.uv), 1);
+	p.position = _sphereCenter + _emissionRadius*vert;
 	p.age = 0;
 	p.life = 3;
-	p.uv = ToRadialCoords(p.position - _sphereCenter);
+	//p.uv = ToRadialCoords(p.position - _sphereCenter);
 
 	return p;
 }
@@ -269,7 +265,7 @@ Particle EmitFromEmitterList(uint id)
 	p.position = EmitterList[idx];
 	p.velocity = float3(0,0,0);
 	p.life = 3;
-	p.uv = ToRadialCoords(p.position - _sphereCenter);
+	//p.uv = ToRadialCoords(p.position - _sphereCenter);
 
 
 	return p;
@@ -277,9 +273,18 @@ Particle EmitFromEmitterList(uint id)
 
 Particle EmitFromSkinnedMesh(uint id)
 {
+
+	uint numPts;
+	uint stride;
+	SkinnedPoints.GetDimensions(numPts, stride);
+
 	Particle p = Particles[id];
 
-	int idx = id%_emitterCount;
+	p.uv = IdToUV(id);
+
+	int idx = random(p.uv)*numPts;
+
+	//int idx = id%_emitterCount;
 
 	PointData vtx = SkinnedPoints[idx];
 
@@ -289,21 +294,23 @@ Particle EmitFromSkinnedMesh(uint id)
 	p.velocity = 50*(vtx.CurrentPosition - vtx.LastPosition);
 	p.life = 3;
 	p.age = 0;
-	p.uv = ToRadialCoords(p.position - _sphereCenter);
+	p.meshUV = vtx.uv;
+	//p.uv = ToRadialCoords(p.position - _sphereCenter);
 
 	return p;
 
-}
+} 
 
 Particle EmitNewParticle(uint id)
 {
-	Particle p = Particles[id];;
+	Particle p;
 	
-	p.velocity = _initialVelocity + (nrand3(p.uv)-float3(.5,.5,.5))*_initialVelocityRandom;
-
-	p = EmitFromSkinnedMesh(id);
-	//EmitFromTransform(p);
-
+	if(_emissionMode > 1)
+		p = EmitFromSkinnedMesh(id);
+	else if(_emissionMode > 0)
+		p = EmitFromCube(id);
+	else
+		p = EmitFromSphere(id);
 
 	return p;
 }
@@ -315,9 +322,9 @@ void InitParticles(uint3 id : SV_DispatchThreadID)
 	int2 xy = int2(id.x / stride, id.y / stride);
 	float2 uv = xy*_uvStep;
 
-	Particles[id.x].uv = uv;
+	Particles[id.x].uv = IdToUV(id.x);
 	
-	Particles[id.x] = EmitFromSphere(id.x);
+	Particles[id.x] = EmitNewParticle(id.x);
 }
 
 float3 limit3(float3 vec, float value)
@@ -328,6 +335,7 @@ float3 limit3(float3 vec, float value)
 		float ratio = value / (float)pow(lengthSquared, 1 / 3);
 		vec *= ratio;
 	}
+
 	return vec;
 }
 
@@ -352,11 +360,14 @@ void UpdateParticles(uint3 id : SV_DispatchThreadID)
 	float3 n2 = snoise_grad(np + float3(21.83, 13.28, 7.32));
 	float3 noise = limit3(_noiseAmplitude*0.1*cross(n1, n2), 2);
 
-	currVel += noise;
+	currVel += noise*_dt;
+	currVel += _constantForce*_dt;
 
 	p.velocity = lerp(currVel, vField, _vectorFieldFollow);
-
+	
+	p.velocity = limit3(p.velocity, _maxSpeed);
 	p.velocity *= (1 - damping);
+	
 	p.position = p.position + p.velocity*_dt;
 
 	float rnd = nrand(p.uv, 17)*0.5;
