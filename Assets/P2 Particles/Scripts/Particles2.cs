@@ -73,7 +73,7 @@ public class Particles2 : MonoBehaviour
         get { return _numParticles; }
     }
 
-    [SerializeField, Range(0, 30000)]
+    [SerializeField, Range(0, 500000)]
     public int _numParticles = 5000;
 
     [SerializeField]
@@ -204,6 +204,7 @@ public class Particles2 : MonoBehaviour
         if (_skinnedEmitter != null && _skinnedEmitter.BakedPoints != null)
         {
             _kernels.SetInt("_emitterCount", _skinnedEmitter.VertexCount);
+            _kernels.SetBuffer(kernelDictionary[Kernels.InitParticles], "SkinnedPoints", _skinnedEmitter.BakedPoints);
             _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "SkinnedPoints", _skinnedEmitter.BakedPoints);
         }
 
@@ -221,8 +222,6 @@ public class Particles2 : MonoBehaviour
 
         _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "Info", _systemInfoBuffer);
         _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "Particles", ParticleBuffer);
-        //_kernels.SetTexture(kernelDictionary[Kernels.UpdateParticles], "_UVParam1", _uvParam1);
-        //_kernels.SetTexture(kernelDictionary[Kernels.UpdateParticles], "_UVParam2", _uvParam2);
     }
 
     private void DestroyBuffers()
@@ -250,11 +249,6 @@ public class Particles2 : MonoBehaviour
 
         _kernels = Instantiate(ComputeKernels) as ComputeShader;
 
-        //if (_uvParam1 == null)
-        //    _uvParam1 = Texture2D.whiteTexture;
-        //if (_uvParam2 == null)
-        //    _uvParam2 = Texture2D.whiteTexture;
-
         CreateKernelDictionary();
 
         CreateBuffers();
@@ -262,7 +256,6 @@ public class Particles2 : MonoBehaviour
         BindComputeShaderBuffers();
 
         InitializeParticles();
-
     }
 
     void OnDestroy()

@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class ParticleForce : MonoBehaviour
 {
-
-    #region ComputeBuffer Structures
     [System.Serializable]
     public struct ForceInfo
     {
@@ -15,13 +13,6 @@ public class ParticleForce : MonoBehaviour
         public float Power;
 
         public static int stride = 6 * sizeof(float);
-    }
-    #endregion 
-
-    // Use this for initialization
-    void Start()
-    {
-
     }
 
     // Update is called once per frame

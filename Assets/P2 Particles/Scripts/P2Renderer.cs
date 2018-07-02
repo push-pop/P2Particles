@@ -87,7 +87,7 @@ public class P2Renderer : MonoBehaviour
 
     public bool _debugVelocity = false;
 
-    protected Material _renderMaterial;
+    public Material _renderMaterial;
 
     protected ComputeBuffer _batchDrawArgs;
     protected ComputeBuffer _meshBuffer;
@@ -127,19 +127,18 @@ public class P2Renderer : MonoBehaviour
     void CreateSpriteMeshBuffer()
     {
         var meshDataArray = new MeshData[ParticleMesh.triangles.Length];
+
         for (int i = 0; i < ParticleMesh.vertices.Length; i++)
-        {
             meshDataArray[i].vert = ParticleMesh.vertices[i];
-        }
+
         for (int i = 0; i < ParticleMesh.uv.Length; i++)
-        {
             meshDataArray[i].uv = ParticleMesh.uv[i];
 
-        }
         for (int i = 0; i < ParticleMesh.triangles.Length; i++)
-        {
             meshDataArray[i].index = ParticleMesh.triangles[i];
-        }
+
+        for (int i = 0; i < ParticleMesh.normals.Length; i++)
+            meshDataArray[i].norm = ParticleMesh.normals[i];
 
         _meshBuffer = new ComputeBuffer(meshDataArray.Length, MeshData.stride);
         _meshBuffer.SetData(meshDataArray);
@@ -155,6 +154,7 @@ public class P2Renderer : MonoBehaviour
     {
         _renderMaterial.SetBuffer("Particles", _particles.ParticleBuffer);
         _renderMaterial.SetBuffer("meshData", _meshBuffer);
+
         _renderMaterial.SetInt("MeshIndexCount", (int)_particleMesh.triangles.Length);
 
         _renderMaterial.SetVector("objectPos", transform.position);

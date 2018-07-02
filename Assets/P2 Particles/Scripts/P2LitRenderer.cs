@@ -5,31 +5,38 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 [RequireComponent(typeof(Particles2))]
+[RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshRenderer))]
 public class P2LitRenderer : P2Renderer
 {
     public Texture2D BumpMap;
     public float BumpAmt;
 
-
     public Mesh _dummyMesh;
+
+    public Vector3 _xyzScale = Vector3.one;
 
     // Use this for initialization
     new void Start()
     {
         base.Start();
-         
+
+        _renderMaterial = GetComponent<MeshRenderer>().sharedMaterial;
+
         CreateDummyMesh();
     }
 
     void CreateDummyMesh()
     {
-        _dummyMesh = new Mesh();
-        var totalVerts = _particles.NumParticles * _particleMesh.triangles.Length;
+        var totalVerts = _particles.NumParticles * _particleMesh.vertexCount;
+
         var verts = new Vector3[totalVerts];
         var indices = new int[totalVerts];
         var uvs = new Vector2[totalVerts];
 
         Debug.Log("Total Verts: " + totalVerts);
+
+        _dummyMesh = new Mesh();
 
         for (int i = 0; i < totalVerts; i++)
         {
@@ -37,29 +44,22 @@ public class P2LitRenderer : P2Renderer
             verts[i] = Vector3.zero;
             uvs[i] = Vector2.zero;
         }
-        _dummyMesh.name = totalVerts.ToString();
+
+        _dummyMesh.name = string.Format("Dummy mesh with {0} verts", totalVerts);
         _dummyMesh.vertices = verts;
         _dummyMesh.indexFormat = IndexFormat.UInt32;
         _dummyMesh.SetIndices(indices, MeshTopology.Triangles, 0);
         _dummyMesh.bounds = new Bounds(Vector3.zero, new Vector3(1000, 1000, 1000));
 
+        GetComponent<MeshFilter>().mesh = _dummyMesh;
+
     }
-    
+
     protected override void DoUpdateMaterialProperties()
     {
-        // _renderMaterial.SetTexture("_BumpMap", BumpMap);
-        //_renderMaterial.SetFloat("_BumpScale", BumpAmt);
-//        _renderMaterial.SetPass(0);
-    }
-
-    private void LateUpdate()
-    {
-
-        Graphics.DrawMeshInstancedIndirect(_dummyMesh, 0, _renderMaterial, _dummyMesh.bounds, _batchDrawArgs, 0, null, ShadowCastingMode.On, true, gameObject.layer, Camera.main);
-    }
-
-    protected override void DoRenderParticles()
-    {
+        _renderMaterial.SetTexture("_BumpMap", BumpMap);
+        _renderMaterial.SetFloat("_BumpScale", BumpAmt);
+        _renderMaterial.SetVector("_XYZScale", _xyzScale);
     }
 
 #if UNITY_EDITOR

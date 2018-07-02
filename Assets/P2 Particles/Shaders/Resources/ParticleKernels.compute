@@ -346,7 +346,7 @@ void UpdateParticles(uint3 id : SV_DispatchThreadID)
 
 	if (p.life < 0 || _maxLife < 0.01) {
 		Particles[id.x] = EmitNewParticle(id.x);
-		return;
+		//return;
 	}
 
 	float isInside = IsInsideVField(p.position);

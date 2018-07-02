@@ -35,7 +35,8 @@
 		#include "fbm.cginc"
 		#include "BooleanOperators.hlsl"
 		#include "RotationMatrix.hlsl"
-
+		 
+#define SUPPORTS_COMPUTE defined( SHADER_API_D3D11) || defined(SHADER_API_METAL)
 
 
 		sampler2D _MainTex;
@@ -46,7 +47,7 @@
 		half _ScaleSpeed;
 		half _ScaleFreq;
 
-		#ifdef SHADER_API_D3D11
+		#if SUPPORTS_COMPUTE
 		StructuredBuffer<Particle> Particles;
 		StructuredBuffer<MeshData> meshData;
 		#endif
@@ -58,7 +59,7 @@
 		half _NumParticles;
 		float4x4 _ObjectTransform;
 		half _Dimmer;
-		float _MaxLife;
+		float _MaxLife; 
 		float _FbmAmt;
 		float4 _RemapFbm;
 		float _FbmFreq;
@@ -93,7 +94,9 @@
 				uint pIndex = v.id / MeshIndexCount;
 				uint mIndex = v.id % MeshIndexCount;
 
+#if SUPPORTS_COMPUTE
 				Particle p = Particles[pIndex];
+				MeshData m = meshData[meshData[mIndex].index];
 
 				float3 norm = normalize(p.position - _WorldSpaceCameraPos);
 				float lat = acos(norm.y);
@@ -108,33 +111,35 @@
 				float3x3 rot = rotationMatrix(axis, angle);
 
 
-				float3 vert = _Scale*meshData[meshData[mIndex].index].vert;
-				float3 worldPosition = p.position + vert;
-				//float4 objectSpace =  float4(mul(unity_WorldToObject, localPosition).xyz, 1);
+				float3 vert = m.vert;
 
-				float3 worldNormal = meshData[meshData[mIndex].index].norm;
-
+				float3 position = p.position + vert;
+				//float3 worldNormal = meshData[meshData[mIndex].index].norm;
 
 
-				float3 ndotl = saturate(dot(worldNormal, _WorldSpaceLightPos0.xyz));
-				float3 ambient = ShadeSH9(float4(worldNormal, 1.0f));
+
+	/*			float3 ndotl = saturate(dot(worldNormal, _WorldSpaceLightPos0.xyz));
+				float3 ambient = ShadeSH9(float4(worldNormal, 1.0f));*/
 
 				//Optimization to clip verts of old particles
 				//localPosition += when_gt(p.age, _MaxLife)*float3(100000,100000, 100000);
 
 				UNITY_INITIALIZE_OUTPUT(Input,o);
 
-				o.pos.xyz = worldPosition;
+				//o.pos.xyz = worldPosition;
 
 				o.uv_MainTex = meshData[meshData[mIndex].index].uv;
 				o.pID.x = pIndex;
 				o.pID.y = mIndex;
 				o.color = float4(p.velocity, p.age);
-				o.color = tex2Dlod(_ColorOverLife, float4(p.age/_MaxLife,0,0,0));
-				o.noise = worldNormal;
-				v.vertex.xyz = o.pos.xyz;
+				//o.color = tex2Dlod(_ColorOverLife, float4(p.age/_MaxLife,0,0,0));
+				//o.noise = worldNormal;
+
+				v.vertex.xyz = position;
 
 				v.normal = norm;
+				 
+#endif
 		}
 
 
@@ -144,16 +149,16 @@
 				float3 rgb = HUEtoRGB(hue);
 
 				o.Albedo = IN.color;
-				//o.Albedo = float3(IN.uv_MainTex.xy,0);
 
 				if (_DebugVelocity)
 					o.Albedo = max( length(IN.color.rgb)*HUEtoRGB(0), IN.color.rgb);
 
-				o.Normal = UnpackScaleNormal(tex2D(_BumpMap, IN.uv_MainTex), 1);
+				o.Albedo = float3(1, 0, 0);
+				//o.Normal = UnpackScaleNormal(tex2D(_BumpMap, IN.uv_MainTex), 1);
 				  
 				o.Smoothness = 1;
 				o.Metallic = .3;
-				o.Emission = float3(0,0,0);
+				o.Emission = float3(1,0,0);
 				o.Alpha = 1;
 
 		}

@@ -169,8 +169,8 @@
 							float radius = .7;
 							float d = cos(floor(.5 + a / r)*r - a)*length(st);
 							return lerp(1, 1.0 - smoothstep(radius, radius + _Softness, d), _Particlize);
-						}
-
+						} 
+						 
 						float circle(float2 uv)
 						{
 							half x = length(uv - 0.5) * 2;
