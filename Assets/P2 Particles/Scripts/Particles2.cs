@@ -65,6 +65,8 @@ public class Particles2 : MonoBehaviour
     ComputeBuffer _batchDrawArgs;
     ComputeBuffer _vFieldInfo;
     ComputeBuffer _systemInfoBuffer;
+    ComputeBuffer _skinnedSourceBuffer;
+
     #endregion
 
     #region Properties
@@ -207,6 +209,13 @@ public class Particles2 : MonoBehaviour
             _kernels.SetBuffer(kernelDictionary[Kernels.InitParticles], "SkinnedPoints", _skinnedEmitter.BakedPoints);
             _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "SkinnedPoints", _skinnedEmitter.BakedPoints);
         }
+        else
+        {
+            if (_skinnedSourceBuffer == null)
+                _skinnedSourceBuffer = new ComputeBuffer(1, 4);
+            _kernels.SetBuffer(kernelDictionary[Kernels.InitParticles], "SkinnedPoints", _skinnedSourceBuffer);
+            _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "SkinnedPoints", _skinnedSourceBuffer);
+        }
 
         _kernels.SetBuffer(kernelDictionary[Kernels.UpdateParticles], "Particles", ParticleBuffer);
     }
@@ -244,7 +253,7 @@ public class Particles2 : MonoBehaviour
     void Start()
     {
         var sqr = Mathf.CeilToInt(Mathf.Sqrt(_numParticles));
-        _numParticles = sqr * sqr;
+        //_numParticles = sqr * sqr;
         _uvStep = new Vector2(1.0f / (float)sqr, 1.0f / (float)sqr);
 
         _kernels = Instantiate(ComputeKernels) as ComputeShader;

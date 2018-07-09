@@ -123,8 +123,8 @@
 
 
 		float3 vert = mesh.vert;
-		vert = _Scale * length(p.velocity)* (_XYZScale*vert.xyz);
-		vert = _XYZScale * vert.xyz;
+		vert = _Scale * max(.2,length(p.velocity))* (_XYZScale*vert.xyz);
+		//vert = _XYZScale * vert.xyz;
 		float3 norm = mesh.norm;
 
 		if (abs(angle) > 0.001) {
