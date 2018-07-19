@@ -1,0 +1,127 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Multiply
+#include "UnityCG.cginc"
+#include "noise.cginc"
+
+struct Vec
+{
+	float3 pos;
+	float3 nPos;
+	float3 vel;
+};
+
+RWStructuredBuffer<Vec> dataBuffer;
+//RWStructuredBuffer<Vec> savedBuffer;
+
+//float3 center;
+
+float3 Left;
+float3 Right;
+//float3 LeftB;
+//float3 RightB;
+
+//float3 LeftPrev;
+//float3 RightPrev;
+
+//float LeftTrigger;
+//float RightTrigger;
+
+//float LeftCymatics;
+//float RightCymatics;
+
+//float BezierLinearLerp;
+//float DrawLine;
+
+//float LeftSpeed;
+//float RightSpeed;
+
+
+//float mass;
+
+//int drawLow;
+//int drawHigh;
+
+float3 NoiseSpeed;
+float3 NoiseAmount;
+float3 NoiseFrequency;
+
+int amount;
+
+
+
+[numthreads(16,1,1)]
+void Multiply (uint3 id : SV_DispatchThreadID)
+{
+	
+	//float LeftDist = max(.2,distance (Left, dataBuffer[id.x].pos));
+	//float3 LeftDir = (normalize(  Left - dataBuffer[id.x].pos)*LeftSpeed)/(LeftDist*LeftDist);
+
+	//float RightDist = max(.2,distance (Right, dataBuffer[id.x].pos));
+	//float3 RightDir = (normalize(  Right - dataBuffer[id.x].pos)*RightSpeed)/(RightDist*RightDist);
+
+	//
+	////BezierLinearLerp = 0;
+	////dir *=speed;
+	//dataBuffer[id.x].vel += LeftDir + RightDir;
+	//dataBuffer[id.x].vel *= .99;
+	//dataBuffer[id.x].vel = 12;
+	/*
+	amount = 1000000;
+
+	//float w = (sign(drawHigh-drawLow) + 1.0) *.5;
+
+
+
+	float t1 = ((id.x*1.0)-drawLow)/(drawHigh-drawLow);
+	//float t2 = (((id.x*1.0)-drawLow) % amount)/(drawHigh + (amount - drawLow));
+
+	float t = t1;//lerp(t2,t1,w);
+
+
+	if(id.x > drawLow && id.x < drawHigh){
+
+		float3 lerpLeft = lerp(Left,Right,.333);
+		float3 lerpRight = lerp(Left,Right,.666);
+
+		//float t = ((id.x*1.0)-drawLow)/(drawHigh-drawLow);
+
+
+		float which = sign(cos(id.x)+sign(RightTrigger)-sign(LeftTrigger) );
+		float LineDraw = sign(cos(id.x) + ((DrawLine*2)-1) );
+
+		float3 leftLine =  lerp(LeftPrev,Left,t)   + ( savedBuffer[id.x].pos * (1-LeftTrigger) * .2 );
+		float3 rightLine = lerp(RightPrev,Right,t) + ( savedBuffer[id.x].pos * (1-RightTrigger) * .2 );
+
+		float3 curve = evaluateBezierPosition(
+			Left + ( savedBuffer[id.x].pos * (1-LeftTrigger) * .2 ),
+	 		lerp(LeftB,lerpLeft,BezierLinearLerp) + ( savedBuffer[id.x].pos * (1-LeftTrigger) * .1 ),
+	 		lerp(RightB,lerpRight,BezierLinearLerp) + ( savedBuffer[id.x].pos * (1-RightTrigger) * .1 ),
+	 		Right + ( savedBuffer[id.x].pos * (1-RightTrigger) * .2 ),
+	 		t);
+
+	 	//dataBuffer[id.x].vel = float3(0,0,0);
+
+	 	float3 lines = lerp( leftLine , rightLine, .5+(which*.5));
+	 	float3 lerpedLines = lerp ( dataBuffer[id.x].pos , lines , sign(abs(sign(RightTrigger)+sign(LeftTrigger))) );
+	 	float3 lerpCurve = lerp(lerpedLines, curve, max(0.0,LineDraw));
+
+ 		dataBuffer[id.x].pos = lerpCurve;
+
+ 	}
+ 	else{
+	*/
+	float3 pos = lerp(Left, Right, (id.x*1.0) / (1.0*amount));
+	float c = (   cos(   ((id.x*1.0) / (1.0*amount))  *6.28  )*-.5) + .5;
+	float nX =.5-snoise(NoiseFrequency * pos + float3(1 + _Time.x*NoiseSpeed.x,0,0));
+	float nY =.5-snoise(NoiseFrequency * pos + float3(0, 1 + _Time.x*NoiseSpeed.y, 0));
+	float nZ =.5-snoise(NoiseFrequency * pos + float3(0, 0,1 + _Time.x*NoiseSpeed.z));
+	dataBuffer[id.x].pos = (pos + float3(NoiseAmount.x*nX,NoiseAmount.y*nY ,NoiseAmount.z*nZ )*c);// += dataBuffer[id.x].vel;
+
+ 	//}
+	if (id.x > 0)
+		dataBuffer[id.x].nPos  = dataBuffer[id.x - 1].pos;
+	else
+		dataBuffer[id.x].nPos = dataBuffer[id.x].pos;
+
+}
+

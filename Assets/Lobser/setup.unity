@@ -135,7 +135,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 150078894}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 923ae56121ebcb642aecfc18cb73d7d1, type: 3}
   m_Name: 
@@ -159,7 +159,7 @@ MonoBehaviour:
   translateNoiseSpeed: {x: 0, y: 0, z: 0}
   translateNoiseOffset: {x: 0, y: 0, z: 0}
   doRotate: 1
-  rotate: {x: 0, y: 90, z: 0}
+  rotate: {x: 90, y: 90, z: 0}
   doRotateOscillate: 0
   rotateOscillateUpperBounds: {x: 0, y: 0, z: 0}
   rotateOscillateLowerBounds: {x: 0, y: 0, z: 0}
@@ -494,7 +494,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _meshData: {fileID: 11400000, guid: eb6ec597a7593f44ba3202f14cadf2e2, type: 2}
-  _placeholderMaterial: {fileID: 693770374}
+  _placeholderMaterial: {fileID: 2060149365}
   _replacementShader: {fileID: 4800000, guid: 1cab1d4d52af84249ae1369c6f1a953e, type: 3}
   RenderBody: 0
 --- !u!137 &578866705
@@ -633,32 +633,12 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 602311312}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -5}
+  m_LocalPosition: {x: 0, y: -0.83, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &693770374
-Material:
-  serializedVersion: 6
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: P2/Placeholder
-  m_Shader: {fileID: 4800000, guid: e713f7d02e16a024db44395a4a136ce6, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs: []
-    m_Floats: []
-    m_Colors: []
 --- !u!1 &955063384
 GameObject:
   m_ObjectHideFlags: 0
@@ -1063,8 +1043,8 @@ MonoBehaviour:
   computeShader: {fileID: 7200000, guid: df0c67f23e63af64091503396e0ecf8f, type: 3}
   spriteTexture: {fileID: 2800000, guid: 387bbbe87bb6fa942be136578d95e4c7, type: 3}
   size: 0.02
-  rightSpeed: 0
-  leftSpeed: 0
+  rightSpeed: 0.0001
+  leftSpeed: 0.0001
   center: {x: 0, y: 0, z: 0}
   renderShader: {fileID: 4800000, guid: 859fb81f5409dc54c8f652503b041608, type: 3}
   ParticleMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
@@ -1075,7 +1055,8 @@ MonoBehaviour:
   Right: {fileID: 981330467}
   drawAmount: 1000
   DrawLine: 1
-  RightTrigger: 0
+  BezierLinearLerp: 0
+  RightTrigger: 1
   LeftTrigger: 1
 --- !u!4 &1066756901
 Transform:
@@ -1435,6 +1416,26 @@ Transform:
   m_Father: {fileID: 1179955951}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!21 &2060149365
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: P2/Placeholder
+  m_Shader: {fileID: 4800000, guid: e713f7d02e16a024db44395a4a136ce6, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Floats: []
+    m_Colors: []
 --- !u!1 &2093579781
 GameObject:
   m_ObjectHideFlags: 0
